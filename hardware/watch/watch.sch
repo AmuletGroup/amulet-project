@@ -9000,6 +9000,15 @@ P-FET pulled to GND when no USB plug
 which allows current from BATT to U9
 When USB plugged, BATT disconnect from U9</text>
 <text x="35.56" y="200.66" size="5.08" layer="97">MSP430 Prog</text>
+<text x="7.62" y="7.62" size="3.302" layer="97" font="vector" ratio="15">Copyright 2016 by the Trustees of Dartmouth College 
+and Clemson University, and distributed under the terms
+of the "Dartmouth College Non-Exclusive Research Use 
+Source Code License Agreement" (for NON-COMMERCIAL
+research purposes only), as detailed in a file named 
+LICENSE.pdf within this repository.</text>
+<text x="7.62" y="38.1" size="5.08" layer="97" font="vector" ratio="23">LICENSE</text>
+<wire x1="7.62" y1="48.26" x2="167.64" y2="48.26" width="1.27" layer="97" style="longdash"/>
+<wire x1="167.64" y1="48.26" x2="167.64" y2="2.54" width="1.27" layer="97" style="longdash"/>
 </plain>
 <instances>
 <instance part="U9" gate="G$1" x="330.2" y="243.84"/>

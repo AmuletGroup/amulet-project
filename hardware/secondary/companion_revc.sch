@@ -1506,7 +1506,7 @@ May 2016</text>
 <text x="297.18" y="152.4" size="3.81" layer="97">microSD</text>
 <text x="188.976" y="242.57" size="5.08" layer="97">Capacitive Touch
 Board</text>
-<text x="30.48" y="91.44" size="5.08" layer="97">Battery Charger Board</text>
+<text x="22.86" y="251.46" size="5.08" layer="97">Battery Charger Board</text>
 <wire x1="187.96" y1="256.54" x2="254" y2="256.54" width="0.1524" layer="97" style="longdash"/>
 <wire x1="254" y1="256.54" x2="254" y2="203.2" width="0.1524" layer="97" style="longdash"/>
 <wire x1="254" y1="203.2" x2="187.96" y2="203.2" width="0.1524" layer="97" style="longdash"/>
@@ -1516,10 +1516,19 @@ Board</text>
 <wire x1="401.32" y1="53.34" x2="401.32" y2="170.18" width="0.1524" layer="97" style="longdash"/>
 <wire x1="401.32" y1="170.18" x2="218.44" y2="170.18" width="0.1524" layer="97" style="longdash"/>
 <text x="220.98" y="162.56" size="5.08" layer="97">Storage Board</text>
-<wire x1="27.94" y1="99.06" x2="170.18" y2="99.06" width="0.1524" layer="97" style="longdash"/>
-<wire x1="170.18" y1="99.06" x2="170.18" y2="12.7" width="0.1524" layer="97" style="longdash"/>
-<wire x1="170.18" y1="12.7" x2="27.94" y2="12.7" width="0.1524" layer="97" style="longdash"/>
-<wire x1="27.94" y1="12.7" x2="27.94" y2="99.06" width="0.1524" layer="97" style="longdash"/>
+<wire x1="20.32" y1="259.08" x2="162.56" y2="259.08" width="0.1524" layer="97" style="longdash"/>
+<wire x1="162.56" y1="259.08" x2="162.56" y2="172.72" width="0.1524" layer="97" style="longdash"/>
+<wire x1="162.56" y1="172.72" x2="20.32" y2="172.72" width="0.1524" layer="97" style="longdash"/>
+<wire x1="20.32" y1="172.72" x2="20.32" y2="259.08" width="0.1524" layer="97" style="longdash"/>
+<text x="7.62" y="7.62" size="3.302" layer="97" font="vector" ratio="15">Copyright 2016 by the Trustees of Dartmouth College 
+and Clemson University, and distributed under the terms
+of the "Dartmouth College Non-Exclusive Research Use 
+Source Code License Agreement" (for NON-COMMERCIAL
+research purposes only), as detailed in a file named 
+LICENSE.pdf within this repository.</text>
+<text x="7.62" y="38.1" size="5.08" layer="97" font="vector" ratio="23">LICENSE</text>
+<wire x1="7.62" y1="48.26" x2="167.64" y2="48.26" width="1.27" layer="97" style="longdash"/>
+<wire x1="167.64" y1="48.26" x2="167.64" y2="2.54" width="1.27" layer="97" style="longdash"/>
 </plain>
 <instances>
 <instance part="PERIPHERALS2" gate="G$1" x="0" y="0"/>
@@ -1536,8 +1545,8 @@ Board</text>
 <instance part="U$7" gate="G$1" x="238.76" y="144.78" rot="R180"/>
 <instance part="U$8" gate="G$1" x="238.76" y="134.62" rot="R180"/>
 <instance part="U$9" gate="G$1" x="238.76" y="127" rot="R180"/>
-<instance part="JP1" gate="G$1" x="68.58" y="60.96" rot="MR0"/>
-<instance part="U$10" gate="G$1" x="93.98" y="66.04" rot="R180"/>
+<instance part="JP1" gate="G$1" x="60.96" y="220.98" rot="MR0"/>
+<instance part="U$10" gate="G$1" x="86.36" y="226.06" rot="R180"/>
 <instance part="JP3" gate="JP1" x="309.88" y="83.82"/>
 </instances>
 <busses>
@@ -1793,33 +1802,33 @@ Board</text>
 <net name="GND_P" class="0">
 <segment>
 <pinref part="JP1" gate="G$1" pin="GND"/>
-<wire x1="71.12" y1="60.96" x2="73.66" y2="60.96" width="0.1524" layer="91"/>
-<label x="73.66" y="53.34" size="1.524" layer="95" rot="R270" xref="yes"/>
+<wire x1="63.5" y1="220.98" x2="66.04" y2="220.98" width="0.1524" layer="91"/>
+<label x="66.04" y="213.36" size="1.524" layer="95" rot="R270" xref="yes"/>
 <pinref part="U$10" gate="G$1" pin="3"/>
-<wire x1="88.9" y1="66.04" x2="86.36" y2="66.04" width="0.1524" layer="91"/>
-<wire x1="86.36" y1="66.04" x2="86.36" y2="63.5" width="0.1524" layer="91"/>
+<wire x1="81.28" y1="226.06" x2="78.74" y2="226.06" width="0.1524" layer="91"/>
+<wire x1="78.74" y1="226.06" x2="78.74" y2="223.52" width="0.1524" layer="91"/>
 <pinref part="U$10" gate="G$1" pin="2"/>
-<wire x1="86.36" y1="63.5" x2="88.9" y2="63.5" width="0.1524" layer="91"/>
-<wire x1="86.36" y1="63.5" x2="86.36" y2="55.88" width="0.1524" layer="91"/>
-<junction x="86.36" y="63.5"/>
-<wire x1="86.36" y1="55.88" x2="73.66" y2="55.88" width="0.1524" layer="91"/>
-<wire x1="73.66" y1="55.88" x2="73.66" y2="60.96" width="0.1524" layer="91"/>
-<wire x1="73.66" y1="53.34" x2="73.66" y2="55.88" width="0.1524" layer="91"/>
-<junction x="73.66" y="55.88"/>
+<wire x1="78.74" y1="223.52" x2="81.28" y2="223.52" width="0.1524" layer="91"/>
+<wire x1="78.74" y1="223.52" x2="78.74" y2="215.9" width="0.1524" layer="91"/>
+<junction x="78.74" y="223.52"/>
+<wire x1="78.74" y1="215.9" x2="66.04" y2="215.9" width="0.1524" layer="91"/>
+<wire x1="66.04" y1="215.9" x2="66.04" y2="220.98" width="0.1524" layer="91"/>
+<wire x1="66.04" y1="213.36" x2="66.04" y2="215.9" width="0.1524" layer="91"/>
+<junction x="66.04" y="215.9"/>
 </segment>
 </net>
 <net name="USB_VIN" class="0">
 <segment>
 <pinref part="JP1" gate="G$1" pin="VBUS"/>
-<wire x1="71.12" y1="63.5" x2="76.2" y2="63.5" width="0.1524" layer="91"/>
-<wire x1="76.2" y1="63.5" x2="83.82" y2="63.5" width="0.1524" layer="91"/>
-<wire x1="83.82" y1="63.5" x2="83.82" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="63.5" y1="223.52" x2="68.58" y2="223.52" width="0.1524" layer="91"/>
+<wire x1="68.58" y1="223.52" x2="76.2" y2="223.52" width="0.1524" layer="91"/>
+<wire x1="76.2" y1="223.52" x2="76.2" y2="220.98" width="0.1524" layer="91"/>
 <pinref part="U$10" gate="G$1" pin="1"/>
-<wire x1="83.82" y1="60.96" x2="88.9" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="76.2" y1="220.98" x2="81.28" y2="220.98" width="0.1524" layer="91"/>
 <pinref part="U$10" gate="G$1" pin="4"/>
-<wire x1="88.9" y1="68.58" x2="76.2" y2="68.58" width="0.1524" layer="91"/>
-<wire x1="76.2" y1="68.58" x2="76.2" y2="63.5" width="0.1524" layer="91"/>
-<junction x="76.2" y="63.5"/>
+<wire x1="81.28" y1="228.6" x2="68.58" y2="228.6" width="0.1524" layer="91"/>
+<wire x1="68.58" y1="228.6" x2="68.58" y2="223.52" width="0.1524" layer="91"/>
+<junction x="68.58" y="223.52"/>
 </segment>
 </net>
 </nets>
