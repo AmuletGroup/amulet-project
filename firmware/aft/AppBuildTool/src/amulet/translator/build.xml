@@ -1,0 +1,65 @@
+<project name="CTranslator" default="dist" basedir=".">
+    <description>
+        Build file for the CTranslator for Amulet
+    </description>
+  <!-- set global properties for this build -->
+  <property name="src" location="."/>
+  <property name="build" location="build"/>
+  <property name="dist"  location="dist"/>
+
+  <target name="init">
+    <!-- Create the time stamp -->
+    <tstamp/>
+    <!-- Create the build directory structure used by compile -->
+    <mkdir dir="${build}"/>
+  </target>
+
+  <target name="compileparser" depends="init" 
+	  description="generate the parser, from the grammar">
+	  <java jar="antlr-4.2-complete.jar" fork="true">
+		  <arg value="C.g4"/>
+	  </java>
+  </target>
+	  
+
+  <target name="compile" depends="init,compileparser"
+        description="compile the source ">
+    <!-- Compile the java code from ${src} into ${build} -->
+    <javac srcdir="${src}" destdir="${build}">
+		<classpath>
+		    <pathelement location="lib/"/>
+		    <pathelement path="${java.class.path}/"/>
+		    <pathelement path="antlr-4.2-complete.jar"/>
+		</classpath>
+	</javac>
+  </target>
+
+  <target name="dist" depends="compile"
+        description="generate the distribution" >
+    <!-- Create the distribution directory -->
+    <mkdir dir="${dist}/lib"/>
+
+    <!-- Put everything in ${build} into the MyProject-${DSTAMP}.jar file -->
+    <jar destfile="${dist}/CTranslator.jar" basedir="${build}">
+		<manifest>
+		    <attribute name="Main-Class" value="CTranslator"/>
+			<attribute name="Class-Path" value="antlr-4.2-complete.jar"/>
+		</manifest>
+	</jar>
+  </target>
+  
+  <target name="test" depends="dist" description="run all of the tests">
+	  <property name="executable-full-path"
+		             location="./tests/runtests.rb"/>
+	  <exec executable="${executable-full-path}">
+
+	  </exec>
+  </target>
+
+  <target name="clean"
+        description="clean up" >
+    <!-- Delete the ${build} and ${dist} directory trees -->
+    <delete dir="${build}"/>
+    <delete dir="${dist}"/>
+  </target>
+</project>

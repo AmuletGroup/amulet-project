@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <application>
+        <name>Pedometer</name>
+        <short_name>PD</short_name>
+        <app_status>TYPE_SAFETY_APP</app_status>
+        <app_description>
+        The pedometer listens for accelerometer readings, and attempts to judge if the 
+        last batch of accelerometer readings was a step, every time the timer is fired.
+        </app_description>
+    </application>
+    
+    <permissions>
+        <api name="AmuletSubscribeInternalSensor" first_argument="ACCELEROMETER" />
+        <api name="AmuletPutData" />
+        <api name="AmuletGetAccelValue" />
+        <api name="AmuletDisplayClr" />
+        <api name="AmuletDisplayMessage" />
+        <api name="AmuletStateTransition" />
+        <api name="AmuletITOA" />
+        <api name="AmuletGetAccelX" />
+        <api name="AmuletGetAccelY" />
+        <api name="AmuletGetAccelZ" />
+        <api name="AmuletTimer" />
+        <api name="AmuletTextHeight" />
+        <api name="AmuletClearRect" />
+        <api name="AmuletCenteredText" />
+        <api name="AmuletSetFont" />
+
+        <api name="AmuletDrawFastHLine" />
+        <api name="AmuletPushChangesToDisplay" />
+        <api name="AmuletConcat" />
+        <api name="AmuletClearRect" />
+        <api name="AmuletFillRect" />
+        <api name="AmuletDrawWalkerImage" />
+        <api name="AmuletText" />
+    </permissions>
+</manifest>

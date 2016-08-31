@@ -1,0 +1,63 @@
+#!/bin/bash
+
+#
+# Using "fswatch" on osx for real-time resource feedback (e.g., energy impact) 
+# during application development.
+#
+# $ brew install fswatch
+#
+# Check out this link if you want more information:
+# - http://stackoverflow.com/questions/1515730/is-there-a-command-like-watch-or-inotifywait-on-the-mac/13807906
+#
+# DEVELOPMENT:
+#   Developing/debugging can be a pain for this sort of "watch" service so 
+#   recently I started using this command (below) to monitor changes to -all- 
+#   files under the src/ directory in the amulet repository with the exception 
+#   of a few locations/file types:
+#
+#     $ fswatch -v --exclude="gen/.*" --exclude=".*.qm.temp" src/
+#
+# INPUT PARAMETERS:
+#   - $1==directorys to watch
+#   - $2==path to config file
+#   - $3==aft flags
+#
+
+VERBOSE=0
+
+usage() {
+    echo "aftd: usage: ./aftd WATCHDIR CONFIG FLAGS"
+}
+
+# Verify that aftd is supported on this OS...
+if [[ "$OSTYPE" == "darwin"* ]]; then
+
+    # Basic input validation.
+    if [ "$#" -ne 3 ]; then
+        usage
+        exit
+    fi
+
+    # Mac OSX
+    start_aftd() {
+            # Debug: Echo the fswatch command.
+            # echo "fswatch -v -o --exclude=\"gen/.*\" --exclude=\".*.qm.temp\" $1 | xargs -n1 ./aft $2 $3 > /dev/null"
+
+            # Add -v flag for more verbose output from fswatch.
+            if [ $VERBOSE -eq 0 ]; then
+            fswatch -o -t --exclude="gen/.*" --exclude=".*.qm.temp" $1 | xargs -n1 ./aft $2 $3 >/dev/null 2>&1
+            else
+            fswatch -o -t --exclude="gen/.*" --exclude=".*.qm.temp" $1 | xargs -n1 ./aft $2 $3 
+            fi
+
+            # TODO: In the future, we may consider logging fswatch output to a log 
+            # file for later review
+            # mkdir -p gen/logs
+            # touch gen/logs/fswatch-log 
+            # fswatch -o -t --exclude="gen/.*" --exclude=".*.qm.temp" $1 | xargs -n1 ./aft $2 $3 >gen/logs/fswatch-log 2>&1
+    }
+    start_aftd $1 $2 $3 $4 &
+else
+    # Unsupported OS Type.
+    echo "ERROR: aftd is not currently supported for non-osx systems."
+fi

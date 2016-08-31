@@ -1,0 +1,557 @@
+#!/usr/bin/env ruby
+
+################################################################################
+################################################################################
+##                                                                            ##
+##                  AMULET FIRMWARE TOOL (AFT) BUILD SCRIPT                   ##
+##                                                                            ##
+##                                                                            ##
+## This script takes a config file as an argument and builds a firmware image ##
+## for the amulet. An example config file is provided in:                     ## 
+##    > example_firmware.config.                                              ## 
+##                                                                            ##
+################################################################################
+################################################################################
+
+require 'fileutils'
+require 'optparse'
+require 'yaml'
+require "open3" 
+
+$options = {}
+
+optparse = OptionParser.new do |opts|
+	opts.banner = "Usage: ./aft [options] file"
+
+	#
+	# Define AFT options.
+	#
+
+	opts.separator ""
+	opts.separator "Convenience:"
+	opts.separator ""
+
+	$options[:all] = false
+	opts.on('--all', "Executes a \"traditional\", more complete, flow of the AFT (i.e., purge, sync, merge/analyze, generate, compile, stats)") do
+		# $options[:all] = true
+		$options[:purge] = true
+		$options[:sync] = true
+		$options[:merge] = true
+		$options[:generate] = true
+		$options[:compile] = true
+		$options[:firmware_stats] = true
+	end
+
+	$options[:arp_view_dev] = false
+	opts.on('--arp-view-dev', "(ARP-view Development) Run `aft --all` once, then run `aft` with this option to run only sync and merge/analyze steps") do
+		$options[:sync] = true
+		$options[:merge] = true
+	end
+
+	$options[:clean] = false
+	opts.on('--clean', "Alias for only running the \"purge\" step to clean the gen/ directory.") do
+		$options[:purge] = true
+	end
+
+	opts.separator ""
+	opts.separator "App Development (aftd control):"
+	opts.separator ""
+	opts.separator "    *** NOTE *** The aftd requires that you have the osx program \"fswatch\"; this tool only "
+	opts.separator "    exists on osx but we may support linux in the future. This should be OK since the primary "
+	opts.separator "    development environment we support currently is osx."
+	opts.separator ""
+	opts.separator "    The aft daemon (a.k.a., \"aftd\") is a service that will watch for changes under the"
+	opts.separator "    `src/` directory in your amulet repository (e.g., applications, ARP-view code, amulet core "
+	opts.separator "    files). If changes are detected, those files will be synced with the `gen/` directory so that "
+	opts.separator "    that ARP-view can utilize those changes in near real-time to aid developers in developing "
+	opts.separator "    resource efficient applications."
+	opts.separator ""
+	opts.separator "    It is recommended that you run `./aft --all` once, then run `./aft --aftd-{start,stop,status}."
+	opts.separator ""
+
+	opts.on('--aftd-start [CONFIGFILE]', "(App Development) Start the aftd that uses fswatch to sync any updated files in near real-time") do |configfile|
+
+		# Load the config file to use. 
+		configfile = configfile || "example_firmware.config"
+		puts "Starting aftd (using '#{configfile}' config file)..."
+
+		# Set which files to watch -- CURRENTLY WE WATCH ALL FILES IN THE src/ DIRECTORY AND BELOW!
+		config = YAML.load_file configfile
+		watchfiles = "#{File.expand_path(config["amulet-config"]["amulet_root"])}/firmware"								# TODO
+		# watchfiles = "#{File.expand_path(config["amulet-config"]["amulet_root"])}/src"								# TODO
+		# watchfiles = "#{File.expand_path(config["amulet-config"]["amulet_root"])}/src/applications "
+		# watchfiles += "#{File.expand_path(config["amulet-config"]["amulet_root"])}/src/aft/AppBuildTool/profiler_ui"
+
+		exec("./aftd \"#{watchfiles}\" #{configfile} --arp-view-dev")
+	end
+
+	opts.on('--aftd-status', "(APP Development) Check the status of the aftd (i.e., see if any aftd related processes are running)") do
+		res = `pgrep  -d ' ' -f aftd`
+		res += `pgrep  -d ' ' fswatch`
+		res += `pgrep  -d ' ' xargs`
+
+		if res.to_s == ''
+		  res = "<none>"
+		end
+
+		puts "aftd related processes: #{res}"
+		exit
+	end
+
+	opts.on('--aftd-stop', "(App Development) Terminate the aftd related processes runnning in the background") do
+		puts "Stopping aftd..."
+
+		# Locate all the processes that are started as part of the aftd and kill'em.
+		`pgrep -f aftd | xargs kill -s TERM > /dev/null`
+		`pgrep fswatch | xargs kill -s TERM > /dev/null`
+		# `pgrep xargs | xargs kill -s TERM > /dev/null` #<-- this is killed when we kill fswatch.
+
+		exit
+	end
+
+	opts.separator ""
+	opts.separator "For more granular control of AFT execution:"
+	opts.separator ""
+
+	$options[:purge] = false
+	opts.on('-p','--purge',"Purge AFT-generated files from the AFT-sanctioned gen/ directory") do
+		$options[:purge] = true
+	end
+
+	$options[:sync] = false
+	opts.on('-s','--sync',"Synchronize amulet files (e.g., Core, BSP, ARP-view) to the gen/ directory (i.e., simply copy them from the src/ to gen/)") do
+		$options[:sync] = true
+	end
+
+	$options[:rebuild_abt] = false
+	opts.on('-a','--rebuild-abt',"Recompiles the Java AppBuildTool (NOTE: You should only need to do this once)") do
+		$options[:rebuild_abt] = true
+	end	
+
+	# NOTE: No QM files are used in the core making this step a nop. 
+	# $options[:rebuild_core] = false
+	# opts.on('-c','--rebuild-core',"Re-generates the core source files from the QM markup (Only use if you are working with the core)") do
+	# 	$options[:rebuild_core] = true
+	# end
+
+	$options[:verbose] = false
+	opts.on('-v', '--verbose', "Output more information about the execution of the AFT script") do
+		$options[:verbose] = true
+	end
+
+	# TODO: add optional log file that will catch the ARP output. 
+	$options[:merge] = false
+	opts.on('-m','--merge-and-arp',"Merge all QM apps into a single QM file and invoke the Amulet Resource Profiler (ARP)") do
+		$options[:merge] = true
+	end
+
+	$options[:generate] = false
+	opts.on('-g','--generate',"Generate C code from a single QM file (i.e., the QM file with all \"apps\" merged together)") do
+		$options[:generate] = true
+	end
+
+	$options[:compile] = false
+	opts.on('-c','--compile-firmware', "Runs the step to build (compile) the firmware") do
+		$options[:compile] = true
+	end
+
+	$options[:firmware_stats] = false
+	opts.on('-f','--firmware-image-stats',"Print stats on the built firmware image") do
+		$options[:firmware_stats] = true
+	end
+
+	$options[:install] = false
+	opts.on('-i','--install-binary',"Installs the generated binary onto the target device using mspdebug") do
+		$options[:install] = true
+	end
+
+	$options[:debug] = false
+	opts.on('-d','--debug',"Attaches to the amulet for debugging using GDB") do
+		$options[:debug] = true
+	end
+	
+	$options[:help] = false
+	opts.on('-h',nil,"Display this help screen") do
+		puts opts
+		exit
+	end
+
+	#
+	# Examples
+	#
+
+	opts.separator ""
+	opts.separator "Examples:"
+
+	opts.separator "\n  Clear out any generated files that may be in the gen/ directory:"
+	opts.separator "      $ ./aft ~/projects/dot-files/amulet-build.config --clean"
+
+	opts.separator "\n  Run a complete pass of the AFT (note: this does not include install/debug):"
+	opts.separator "      $ ./aft ~/projects/dot-files/amulet-build.config --all"
+
+	opts.separator "\n  (App Developers!) Start the aftd so that the ARP files are recomputed when changes are made to src files:"
+	opts.separator "      $ ./aft --aftd-start ~/projects/dot-files/amulet-build.config"
+
+	opts.separator "\n  (App Developers!) Check the status of the aftd (i.e., are there any aftd-related processes running?):"
+	opts.separator "      $ ./aft --aftd-status"
+
+	opts.separator "\n  (App Developers!) Stop the aftd."
+	opts.separator "      $ ./aft --aftd-stop"
+
+end
+
+optparse.parse!
+if ARGV.size < 1
+	puts "No config file provided. Defaulting to example_firmware.config"
+	configfile = "example_firmware.config"
+else
+	configfile = ARGV[0]
+end
+
+################################################################################
+################################################################################
+##                                                                            ##
+##                              AUXILIARY FUNCTIONS                           ##
+##                                                                            ##
+################################################################################
+################################################################################
+
+def vputs(s)
+	puts s if $options[:verbose]
+end
+
+def dostep(desc,cmd)
+	vputs("\n[#{desc}] #{cmd}")
+	if !system(cmd)
+		puts "Error...step failed. Exiting!"
+		exit
+	end
+end
+
+def getElfStats(executable)
+	puts("\n[producing binary image stats for: #{executable}]")
+
+	$segs = [".data", ".upper.data", ".rodata", ".upper.rodata", ".bss", ".noinit", ".text", ".upper.text"]
+	$allsegs = {}
+
+	response = `msp430-elf-size #{executable}`	
+	total_bin_size = response.split("\n")[1].split(" ")[3]
+
+	response = `msp430-elf-readelf -S #{executable}`
+	fJson = File.open("gen/profiler_ui/compiled_mem_stats.js","w")						# TODO
+	fJson.write("var app_mem_stats={\n")
+	fJson.write("\"total_memory_stats\": {")
+	fJson.write("\"binary_size\" : \"#{total_bin_size}\",")
+	response.lines.each do |line|
+		toks = line.gsub("[ ","[").split
+
+		if toks[0] && toks[0].start_with?("[")
+			seg = toks[1]
+			if $segs.index seg
+				type = toks[2]
+				addr = toks[3]
+				off = toks[4]
+				size = toks[5]
+
+				puts "#{seg.ljust(18)} #{type.ljust(20)} #{size.to_i(16)}\n"
+				fJson.write("\"#{seg}\" : #{size.to_i(16)},\n")
+				# puts format('%-s %-s %-10d', seg, type, size.to_i(16))
+				# [1, 12, 123, 1234].map { |e| format('%03d', e % 1000) }
+			end
+		end 
+	end
+	fJson.write("},\n")
+
+	response = `msp430-elf-readelf -s -W #{executable}`
+
+	response.lines.each do |line|
+		toks = line.split(" ")
+		if toks.count > 7
+			fJson.write("\""+toks[7] +"\":")
+			fJson.write(toks)
+			fJson.write(",\n")
+		end
+	end
+	fJson.write("};\n")
+	fJson.close
+end
+
+################################################################################
+################################################################################
+##                                                                            ##
+##                     UNPACK AMULET CONFIG FILE PARAMETERS                   ##
+##                                                                            ##
+################################################################################
+################################################################################
+
+#load the AFT configuration file
+puts "Reading configuration: #{configfile}"
+config = YAML.load_file configfile
+
+#set verbosity for AFT output
+if config["amulet-config"]["verbose"]
+	$options[:verbose] = true
+end
+
+#check configuration for well-formedness
+vputs config
+if !config.has_key? "amulet-config"
+	puts "Error: top-level amulet-config entry not found."
+	exit
+end
+
+#get the toolchain options
+flags = "-"
+flags = flags+"t" if config["amulet-config"]["flags"]["pins"]
+flags = flags+"p" if config["amulet-config"]["flags"]["aft"]
+flags = flags+"r" if config["amulet-config"]["flags"]["resource_profiling"]
+
+if config["amulet-config"]["gcc_root"] != ""
+	gcc_root = config["amulet-config"]["gcc_root"]
+else
+	gcc_root= "/opt/ti-mspgcc/bin"
+end
+
+# Compiler
+compiler_config = config["amulet-config"]["compiler"]
+if compiler_config == "ccs"
+	cc = "cl430"
+elsif compiler_config == "gcc"
+	cc = "#{gcc_root}/msp430-elf-gcc"
+else
+	puts "Compiler not found. Defaulting to gcc"
+	cc = "#{gcc_root}/msp430-elf-gcc"
+end
+
+# QMC paths
+if config["amulet-config"]["qmc_path"] != ""
+	QMC_PATH = config["amulet-config"]["qmc_path"]
+else
+	QMC_PATH = "#{ENV["HOME"]}/qm/bin/qmc"
+end
+
+# Top-level paths
+amulet_root = File.expand_path(config["amulet-config"]["amulet_root"])
+qpc_root = File.expand_path(config["amulet-config"]["qpc_root"])
+
+# AFT-related paths.
+amulet_aft = "#{amulet_root}/firmware/aft"													# TODO
+aft_gen_dir = "#{amulet_aft}/gen"															# TODO
+aft_appbuildtool = "#{amulet_aft}/AppBuildTool"												# TODO
+aft_appbuildtool_src = "#{aft_appbuildtool}/src"											# TODO
+aft_appbuildtool_bin = "#{aft_appbuildtool}/bin"											# TODO
+
+# Amulet Core-related paths.
+amulet_src_dir  = "#{amulet_root}/firmware" 												# TODO
+amulet_core_dir = "#{amulet_src_dir}/amulet-os"												# TODO
+amulet_port_dir = "#{amulet_src_dir}/native"												# TODO		
+
+
+#get the list of applications
+if config["amulet-config"]["apps"] != nil
+	apps = config["amulet-config"]["apps"].map { | app | app["name"] }       # Names of all apps specified in the config file
+	amulet_apps = File.expand_path(config["amulet-config"]["amulet_apps"])   # The base path to the "apps" folder
+	app_files = apps.map { |appname| "#{amulet_apps}/#{appname}/#{appname}.qm"}.join(" ")
+else
+	puts "Error: no apps set in aft configuration file. Exiting!"
+	exit
+end
+
+# Build-related files.
+dest_qm = "#{aft_gen_dir}/generated.qm"														# TODO
+
+# Update the Java classpath to include:
+#   1) ANTLR .jar
+#   2) JSON .jar
+antlr =  "#{aft_appbuildtool_src}/amulet/translator/antlr-4.2-complete.jar"					# TODO
+json =  "#{amulet_aft}/libs/json-simple-1.1.1.jar"											# TODO
+classpath_string = "#{antlr}:#{json}:#{aft_appbuildtool_bin}:#{aft_appbuildtool_src}:$CLASSPATH"
+
+################################################################################
+################################################################################
+##                                                                            ##
+##                             BUILD FRESH FIRMWARE                           ##
+##                                                                            ##
+################################################################################
+################################################################################
+
+########################  0. SETUP THE GEN/ ENVIRONMENT  ####################### 
+
+vputs "\n[start]"
+
+puts "-> Generated files will go here: #{aft_gen_dir}"
+
+# Start from scratch (e.g., delete all files except for the README in the gen/ dir). 
+if $options[:purge]
+	vputs "\n[purging all generated files (i.e., those in `gen/`)...]"
+	`find #{aft_gen_dir} -not -name 'README' -type f -exec rm -rf {} +`
+	`mkdir -p #{aft_gen_dir}`
+else
+	vputs "\n[skipping the purge of all generated files (i.e., those in `gen/`)]"
+end
+
+############################  1. SYNCHRONIZATION  ############################## 
+
+if $options[:sync] 
+	vputs "\n[synchronizing files...]"
+
+	# Make the directory where generated code will go.
+	FileUtils::mkdir_p aft_gen_dir if !Dir.exists?(aft_gen_dir)
+
+	# Make the directory where the profiler UI (a.k.a., the "ARP-view") will go.
+	FileUtils::mkdir_p "#{aft_gen_dir}/profiler_ui" if !Dir.exists?("#{aft_gen_dir}/profiler_ui")
+
+	# Copy in profiler UI code (a.k.a. the "ARP-view").
+	FileUtils.copy_entry "#{aft_appbuildtool}/profiler_ui", "#{aft_gen_dir}/profiler_ui"
+
+	# Copy in device profile file(s).
+	FileUtils.cp_r "#{aft_appbuildtool_src}/amulet/resourceprofiler/device_profile_amuletprotov1.0.json", "#{aft_gen_dir}/profiler_ui/"	# TODO
+
+	# Copy in the underlying Amulet Core and BSP sources.
+	FileUtils.copy_entry amulet_core_dir, "#{aft_gen_dir}/core"								# TODO
+	FileUtils.copy_entry amulet_port_dir, "#{aft_gen_dir}/port"								# TODO
+	FileUtils.copy_entry "#{aft_appbuildtool}/Makefile", "#{aft_gen_dir}/Makefile"			# TODO
+else
+	vputs "\n[skipping file synchronization]"
+end
+
+############################  2. REBUILD THE AFT  ############################## 
+
+# JAVA AppBuildTool
+if $options[:rebuild_abt]
+	vputs "\n[(re-)building app build tool (abt)...]"
+
+	# Clean up before re-compiling AFT + dependencies
+	dostep("remove old tools bin dir (if any)", "rm -rf #{aft_appbuildtool_bin}")			# TODO
+	dostep("recreate tools bin dir", "mkdir #{aft_appbuildtool_bin}")						# TODO
+
+	# Compile the app build tool -- only need this after changes to it
+	dostep("compile tools","javac -d #{aft_appbuildtool_bin} -classpath #{classpath_string} #{aft_appbuildtool_src}/amulet/appmerge/AppMerge.java")	# TODO
+else
+	vputs "\n[skipping (re-)building app build tool (abt)]"
+end
+
+############################  3. REBUILD THE CORE  ############################# 
+
+#
+# NOTE: So long as we are not using QM files in the core, this phase of the 
+# build process is effectively a nop. 
+#
+
+# # If the core is not compiled, then build it 
+# files_sorted_by_time = Dir["#{amulet_root}/src/amulet-os/core/*.qm"].sort_by{ |f| File.mtime(f) }
+# files_sorted_by_time.each do |i|
+# 	if !File.exist?("#{amulet_root}/src/amulet-os/core/" +File.basename("#{i}", ".qm")+".c")
+# 		$options[:rebuild_core] = true
+# 		break;
+# 	end
+# end
+
+# # Rebuild the core QM files to generate the .c / .h files used for AFT
+# if $options[:rebuild_core] == true
+# 	vputs "\n[building core]"
+	
+# 	files_sorted_by_time.each do |i|
+# 		dostep("generating","#{QMC_PATH}/qmc #{i}")
+# 	end
+# end
+
+############  4. MERGE/ANALYZE APPLICATIONS + GENERATE C CODE  ################# 
+
+if $options[:merge]
+	# Merge the QM files (merge, translate, analyze, etc.).
+	dostep("merging apps", "java -classpath #{classpath_string} amulet.appmerge.AppMerge #{amulet_root} #{dest_qm} #{flags} #{app_files}") # TODO
+else
+	vputs "\n[skipping app merge & resource analysis]"
+end
+
+if $options[:generate]
+	# Invoke the QM compiler to generate C code from the merged QM files (i.e., Amulet "Apps").
+	dostep("generating app code","#{QMC_PATH}/qmc #{aft_gen_dir}/generated.qm")		# TODO
+else
+	vputs "\n[skipping C code generation]"
+end
+
+##########################  5. BUILD FIRMWARE IMAGE  ########################### 
+
+# Only try to compile the firmware if the :compile flag has been set. 
+if $options[:compile]
+
+	makeFlags = ""
+	if $options[:verbose]
+		makeFlags += "verbose=true "
+	end
+
+	# Target device is either BSP_DEV for the dev boards or BSP_BRACELET for actual device
+	# Add in RTC informationm from local time
+	time_for_rtc = Time.new
+	makeFlags += ["CFLAGS=\"-D#{config["amulet-config"]["config"]}",
+		"-DRTCYEAR_DEF=#{time_for_rtc.year}",
+		"-DRTCMONTH_DEF=#{time_for_rtc.month}",
+		"-DRTCDAY_DEF=#{time_for_rtc.day}",
+		"-DRTCDOW_DEF=#{time_for_rtc.wday}",
+		"-DRTCHOUR_DEF=#{time_for_rtc.hour}",
+		"-DRTCMIN_DEF=#{time_for_rtc.min}",
+		"-DRTCSEC_DEF=#{time_for_rtc.sec} \"",
+		].join(" ")
+
+	# Run "make"
+	dostep("compiling firmware","make -C #{aft_gen_dir} all #{makeFlags} CC=#{cc} QPC_ROOT=#{qpc_root} GCC_DIR=#{gcc_root} ")	# TODO
+
+	puts "\n[build complete]"
+else
+	vputs "\n[skipping compilation]"
+end
+
+#############################  6. FLASH AMULET  ################################ 
+
+FIRMWARE="msp430fr5969.out"
+
+if $options[:firmware_stats]
+	if File.file?("#{aft_gen_dir}/#{FIRMWARE}")			# TODO
+		getElfStats("#{aft_gen_dir}/#{FIRMWARE}")		# TODO
+	else
+		puts "\n[ERROR: could not generate ELF stats. #{aft_gen_dir}/#{FIRMWARE}#{FIRMWARE} file not found.]"	# TODO
+	end
+else
+	vputs "\n[skipping elf stats]"
+end
+
+# If libmsp430.so/dylib can not be found, update LD_LIBRARY_PATH to point to your 
+# GCC build / bin folder.
+if $options[:install]
+	puts "[trying to flash...]"
+	vputs("mspdebug tilib \"prog #{aft_gen_dir}/#{FIRMWARE}\"")				# TODO
+	if !system("mspdebug tilib \"prog #{aft_gen_dir}/#{FIRMWARE}\"")		# TODO
+		puts "mspdebug failed. If device is connected, please update firmware using \"mspdebug tilib --allow-fw-update\" and retry aft"
+	else
+		puts "[done -- type mspdebug tilib \"run\"]"
+	end
+else
+	vputs "\n[skipping installation]"
+end
+
+###############################  7. DEBUGGING  ################################# 
+
+# DEBUGGING NOTES: 
+#  * This part of the script assumes you are running aft from the aft folder.
+#  * Make sure ~/ti/gcc/bin is in your PATH.
+# 
+# If you still have issues with getting the debugger to start, try the traditional 
+# way of starting the debugger:
+#
+#   $ mspdebug tilib gdb &
+#
+# Then once it says "waiting for connection on 2000" or something, do:
+#
+#   $ msp430-elf-gdb -x tools/cmd.gdb
+#
+# All from the aft directory. Then set breakpoints in gen/apps.c
+
+if $options[:debug]
+	puts "[starting debugger server...]"
+	Open3.popen3('mspdebug tilib gdb') 
+	sleep(5)
+	puts "[starting debugger...]"
+	system("msp430-elf-gdb -x tools/gdb.cmd")
+end

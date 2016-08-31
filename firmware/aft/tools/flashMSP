@@ -1,0 +1,121 @@
+#!/usr/bin/env ruby
+
+###############################################################################
+#                           AUX. Functions                                    #
+###############################################################################
+def vputs(s)
+	puts s if $options[:verbose]
+end
+
+def checkvar(v)
+	if !ENV.has_key?(v)
+		puts "Environment variable (#{v}) not set."
+		exit
+	end
+end
+
+def dostep(desc,cmd)
+	vputs("[#{desc}] #{cmd}")
+	if !system(cmd)
+		puts "Error...step failed. Exiting!"
+		exit
+	end
+end
+
+
+###############################################################################
+#                           MAIN SCRIPT                                       #
+###############################################################################
+require 'optparse'
+require 'yaml'
+
+
+
+$options = {}
+
+optparse = OptionParser.new do |opts|
+	opts.banner = "Usage: do-aft [options] file"
+
+	#define options
+	$options[:verbose] = false
+	opts.on('-v', '--verbose', "Output more information") do
+		$options[:verbose] = true
+	end
+
+	$options[:help] = false
+	opts.on('-h',nil,"Display this screen") do
+		puts opts
+		exit
+	end
+end
+
+optparse.parse!
+if ARGV.size < 1
+	puts "No config file provided. Defaulting to example_firmware.config"
+	configfile = "example_firmware.config"
+else
+	configfile = ARGV[0]
+end
+
+#check that needed environment vars are set
+#checkvar("AMULET_ROOT")
+#checkvar("QPC_ROOT")
+#checkvar("HOME")
+
+puts "Building configuration: #{configfile}"
+vputs "verbose = true"
+
+vputs "\nreading configuration..."
+config = YAML.load_file configfile
+
+#check configuration for well-formedness
+vputs config
+if !config.has_key? "amulet-config"
+	puts "Error: top-level amulet-config entry not found."
+	exit
+end
+
+if config["amulet-config"]["verbose"]
+	$options[:verbose] = true
+end
+
+#get the list of applications
+apps = config["amulet-config"]["apps"].map { | app | app["name"] }
+
+#get the toolchain options
+flags = "-"
+flags = flags+"t" if config["amulet-config"]["flags"]["pins"]
+flags = flags+"p" if config["amulet-config"]["flags"]["do-aft"]
+
+# Root variables
+amulet_root = File.expand_path(config["amulet-config"]["amulet_root"])
+qpc_root = File.expand_path(config["amulet-config"]["qpc_root"])
+AMULET_APPS = File.expand_path(config["amulet-config"]["amulet_apps"])
+
+# Compiler
+compiler_config = config["amulet-config"]["compiler"]
+if compiler_config == "ccs"
+	cc = "cl430"
+elsif compiler_config == "gcc"
+	cc = "msp430-elf-gcc"
+else
+	puts "Compiler not found. Defaulting to gcc"
+	cc = "msp430-elf-gcc"
+end
+# Convenience.
+
+AMULET_TOOLS="#{amulet_root}/src/aft"
+GEN_DIR="#{AMULET_TOOLS}/gen"
+
+app_files = apps.map { |appname| "#{AMULET_APPS}/#{appname}/#{appname}.qm"}.join(" ")
+
+vputs("mspdebug tilib \"prog #{GEN_DIR}/msp430fr5969.out\"")
+if !system("mspdebug tilib \"prog #{GEN_DIR}/msp430fr5969.out\"")
+	#puts "mspdebug failed. If device is connected, please update firmware using \"mspdebug tilib --allow-fw-update\" and retry do-aft"
+	vputs("mspdebug tilib \"prog #{GEN_DIR}/msp430fr5969.out\"")
+	if !system("mspdebug tilib --allow-fw-update \"prog #{GEN_DIR}/msp430fr5969.out\"")
+		puts "mspdebug failed. If device is connected, please update firmware using \"mspdebug tilib --allow-fw-update\" and retry do-aft"
+	else
+		puts "[done -- type mspdebug tilib \"run\"]"
+	end
+end

@@ -1,0 +1,1187 @@
+<!--
+
+Copyright 2016 by the Trustees of Dartmouth College and Clemson University, 
+and distributed under the terms of the "Dartmouth College Non-Exclusive Research
+Use Source Code License Agreement" (for NON-COMMERCIAL research purposes only),
+as detailed in a file named LICENSE.pdf within this repository.
+
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="AO" stereotype="0x02">
+  <class name="EMA_App" superclass="qpc::QActive">
+   <attribute name="selected_line" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="event_type" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="response_1" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="response_2" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="response_3" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="question1_options" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="question2_options" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="question3_options" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="tryCount" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="manualTriggerCount" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="currentBlock" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="timeBlock[4] " type="int" visibility="0x00" properties="0x00"/>
+   <attribute name="times[3]" type="int" visibility="0x00" properties="0x00"/>
+   <attribute name="myCurrentHour" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="test[2]" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="time1" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="time2" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="time3" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="timeBlock0" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="timeBlock1" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="timeBlock2" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="time" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="timeBlock3" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="first_weekday[13]" type="char" visibility="0x00" properties="0x00"/>
+   <attribute name="first_sec" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="first_hour" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="first_min" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="first_day" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="first_month" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="first_year" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="five_mins" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="time1_done" type="int" visibility="0x00" properties="0x00"/>
+   <attribute name="time2_done" type="int" visibility="0x00" properties="0x00"/>
+   <attribute name="time3_done" type="int" visibility="0x00" properties="0x00"/>
+   <attribute name="seconds" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="should_init" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="should_update" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="last_event_time" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="fail_count" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <operation name="selectLine" type="void" visibility="0x00" properties="0x00"/>
+   <operation name="generateSchedule" type="void" visibility="0x00" properties="0x00">
+    <documentation>//generates random times for the 3  time blocks</documentation>
+    <code>uint8_t sec = AmuletClock(SECOND);
+uint8_t min = AmuletClock(MINUTE);
+uint8_t hour = AmuletClock(HOUR);
+
+
+time1 = timeBlock0 +  sec%4;
+time2 = timeBlock1 +  min%4;
+time3 = timeBlock2 +  hour%4;
+/*
+time1 = timeBlock0 +  0;
+time2 = timeBlock1 +  0;
+time3 = timeBlock2 +  4;
+*/
+//reset Values
+switch(currentBlock){
+    case 0:
+        time1_done = 1;
+ 
+        break;
+
+    case 1:
+        time2_done = 1;
+        break;
+
+    case 2:
+        time3_done = 1;
+        break;
+
+    default:
+        time1_done = 1;
+        
+}</code>
+   </operation>
+   <operation name="isTimeUp" type="uint8_t" visibility="0x00" properties="0x00">
+    <code>uint8_t currentMin = AmuletClock(MINUTE);
+uint8_t currentHour = AmuletClock(HOUR);
+
+//setBlockNumber();
+
+if (currentHour &gt;= timeBlock0
+&amp;&amp; currentHour &lt; timeBlock1){
+    currentBlock = 0;
+}else if (currentHour &gt;= timeBlock1
+&amp;&amp; currentHour &lt; timeBlock2){
+    currentBlock = 1;
+}else if (currentHour &gt;= timeBlock2
+&amp;&amp; currentHour &lt; timeBlock3){
+  currentBlock = 2;
+
+}
+
+//-------------------------//
+int returnValue = 0;
+//get hour
+
+switch(currentBlock){
+    case 0:
+        if (time1_done == 0)
+            time = time1;
+        else
+            time = -1;
+        break;
+
+    case 1:
+        if (time2_done == 0)
+            time = time2;
+        else
+            time = -1;
+        break;
+
+    case 2:
+        if (time3_done == 0)
+            time = time3;
+        else
+            time = -1;
+        break;
+
+    default:
+        time = -1;
+        
+}
+
+
+/*
+if (currentBlock == 0 &amp;&amp; time1_done == 0){
+    time = time1;
+}else if(currentBlock == 1){
+    time = time2;
+}else if(currentBlock == 2){
+    time = time3;
+}
+*/
+
+//Check the current hour matches
+//that in the current time block
+//if (currentHour == times[currentBlock]){
+if (currentHour == time){
+    returnValue = 1;
+}else{
+    returnValue = 0;
+}
+
+return returnValue;</code>
+   </operation>
+   <operation name="isActive" type="uint8_t" visibility="0x00" properties="0x00">
+    <documentation>//checks if in active time peroid for EMA</documentation>
+    <code>uint8_t currentMin = AmuletClock(MINUTE);
+uint8_t currentHour = AmuletClock(HOUR);
+int returnValue = 0;
+
+if (currentHour &gt;= timeBlock0
+&amp;&amp; currentHour &lt;= timeBlock3){
+    returnValue = 1;
+}else{
+    returnValue = 0;
+}
+
+return returnValue;
+</code>
+   </operation>
+   <operation name="isTimeForSchedule" type="uint8_t" visibility="0x00" properties="0x00">
+    <documentation>//check if it's 7 am which is the time to generate schedule</documentation>
+    <code>myCurrentHour = AmuletClock(HOUR);
+int generateScheduleTime = 7;
+int returnValue = 0;
+
+if (myCurrentHour == generateScheduleTime){
+    returnValue = 1;
+    //reset manual trigger count
+    manualTriggerCount = 0;
+}else{
+    returnValue = 0;
+}
+
+return returnValue;</code>
+   </operation>
+   <operation name="resetValues" type="void" visibility="0x00" properties="0x00">
+    <code>switch(currentBlock){
+    case 0:
+        time1_done = 1;
+ 
+        break;
+
+    case 1:
+        time2_done = 1;
+        break;
+
+    case 2:
+        time3_done = 1;
+        break;
+
+    default:
+        time1_done = 1;
+        
+}</code>
+   </operation>
+   <operation name="logFailAlert" type="void" visibility="0x00" properties="0x00">
+    <code>//Buzz 
+AmuletHapticSingleBuzz();
+
+
+char mess1[16] = &quot;Error!&quot;;
+char mess2[16] = &quot;Check SD Card&quot;;
+char mess3[16] = &quot;Press button&quot;;
+char mess4[16] = &quot;when done&quot;;
+
+//Display message
+AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletRegularCenteredText(0, mess1);
+AmuletRegularCenteredText(13, mess2);
+AmuletRegularCenteredText(26, mess3);
+AmuletRegularCenteredText(39, mess4);
+AmuletPushChangesToDisplay();</code>
+   </operation>
+   <operation name="logHeader" type="uint8_t" visibility="0x00" properties="0x00">
+    <code>uint8_t returnValue = 1;
+char headers[80];
+
+char time_first[17] = &quot;Time(Triggered)&quot;;
+char time_last[16] = &quot;Time(Completed)&quot;;
+char weekday_first[20]= &quot;Weekday(Triggered)&quot;;
+char weekday_last[20]= &quot;Weekday(Completed)&quot;;
+char question1[3] = &quot;Q1&quot;;
+char question2[3] = &quot;Q2&quot;;
+char question3[3] = &quot;Q3&quot;;
+char comma[2] = &quot;,&quot;;
+char next_line[2]= &quot;\n&quot;;
+
+//Concatenate strings
+AmuletConcat(headers, weekday_first);
+AmuletConcat(headers, comma);
+AmuletConcat(headers, time_first);
+AmuletConcat(headers, comma);
+
+AmuletConcat(headers, weekday_last);
+AmuletConcat(headers, comma);
+AmuletConcat(headers, time_last);
+AmuletConcat(headers, comma);
+
+AmuletConcat(headers, question1);
+AmuletConcat(headers, comma);
+AmuletConcat(headers, question2);
+AmuletConcat(headers, comma);
+AmuletConcat(headers, question3);
+AmuletConcat(headers, next_line);
+
+//log headers
+if ((AmuletLogAppend(headers))==0){
+    returnValue = 1;
+}else{
+    returnValue = 0;
+}
+
+return returnValue;</code>
+   </operation>
+   <operation name="logManualEvent" type="uint8_t" visibility="0x00" properties="0x00">
+    <code>int returnValue = 0;
+char manual_event_data[22];
+
+char comma[2] = &quot;,&quot;;
+char colon[2] = &quot;:&quot;;
+char weekday[13];
+char event[2];
+char nextLine[2]= &quot;\n&quot;;
+
+char first_sec_string[3];
+char first_min_string[3];
+char first_hour_string[3];
+
+AmuletITOA(first_sec, first_sec_string);
+AmuletITOA(first_min, first_min_string);
+AmuletITOA(first_hour, first_hour_string);
+
+AmuletITOA(event_type, event);
+AmuletWeekText(weekday);
+
+//Concatenate strings
+AmuletConcat(manual_event_data, event);
+AmuletConcat(manual_event_data, comma);
+
+AmuletConcat(manual_event_data, weekday);
+AmuletConcat(manual_event_data, comma);
+
+AmuletConcat(manual_event_data, first_hour_string);
+AmuletConcat(manual_event_data, colon);
+AmuletConcat(manual_event_data, first_min_string);
+AmuletConcat(manual_event_data, colon);
+AmuletConcat(manual_event_data, first_sec_string);
+
+AmuletConcat(manual_event_data, nextLine);
+
+//log headers
+if (AmuletLogAppend(manual_event_data)==0){
+    returnValue = 1;
+}else{
+    returnValue = 0;
+}
+
+return returnValue;
+</code>
+   </operation>
+   <operation name="logFinalData" type="uint8_t" visibility="0x00" properties="0x00">
+    <code>int return_value = 1;
+
+char first_sec_string[3];
+char first_min_string[3];
+char first_hour_string[3];
+
+char log_buffer[45];
+char sec[3];
+char min[3];
+char hour[3];
+char dd[3];
+char mm[3];
+char yyyy[5];
+char weekday[14];
+char event[2];
+char comma[2] = &quot;,&quot;;
+//char comma[3] = &quot; &quot;;
+char colon[2] = &quot;:&quot;;
+char space[2] = &quot; &quot;;
+char nextline[2]= &quot;\n&quot;;
+
+char response1_string[3];
+char response2_string[3];
+char response3_string[3];
+
+uint8_t time_of_day_seconds = AmuletClock(SECOND);
+uint8_t time_of_day_minutes = AmuletClock(MINUTE);
+uint8_t time_of_day_hours = AmuletClock(HOUR);
+uint8_t day = AmuletClock(DAY);
+uint8_t month = AmuletClock(MONTH);
+uint16_t year = AmuletClock(YEAR);
+
+
+//convert for first time data
+AmuletITOA(first_sec, first_sec_string);
+AmuletITOA(first_min, first_min_string);
+AmuletITOA(first_hour, first_hour_string);
+
+
+//convert for second time data
+AmuletITOA(time_of_day_seconds, sec);
+AmuletITOA(time_of_day_minutes, min);
+AmuletITOA(time_of_day_hours, hour);
+AmuletITOA(month, mm);
+AmuletITOA(day, dd);
+AmuletITOA(year, yyyy);
+AmuletITOA(event_type, event);
+
+AmuletITOA(response_1, response1_string);
+AmuletITOA(response_2, response2_string);
+AmuletITOA(response_3, response3_string);
+
+AmuletWeekText(weekday);
+
+//Concatenate strings to log
+AmuletConcat(log_buffer,event);
+AmuletConcat(log_buffer,comma);
+
+AmuletConcat(log_buffer,weekday);
+AmuletConcat(log_buffer,comma);
+
+AmuletConcat(log_buffer,first_hour_string);
+AmuletConcat(log_buffer,colon);
+AmuletConcat(log_buffer,first_min_string);
+AmuletConcat(log_buffer,colon);
+AmuletConcat(log_buffer,first_sec_string);
+AmuletConcat(log_buffer,comma);
+
+AmuletConcat(log_buffer,weekday);
+AmuletConcat(log_buffer,comma);
+
+AmuletConcat(log_buffer,hour);
+AmuletConcat(log_buffer,colon);
+AmuletConcat(log_buffer,min);
+AmuletConcat(log_buffer,colon);
+AmuletConcat(log_buffer,sec);
+AmuletConcat(log_buffer,comma);
+
+
+AmuletConcat(log_buffer,response1_string);
+AmuletConcat(log_buffer,comma);
+AmuletConcat(log_buffer,response2_string);
+AmuletConcat(log_buffer,comma);
+AmuletConcat(log_buffer,response3_string);
+AmuletConcat(log_buffer,nextline);
+
+
+//log final data
+if (AmuletLogAppend(log_buffer) == 0){
+    return_value = 1;
+}else{
+    return_value = 0;
+}
+
+
+return return_value;
+
+
+</code>
+   </operation>
+   <statechart>
+    <initial target="../4">
+     <action brief="Start">char message[8] = &quot;Init..&quot;;
+AmuletRegularCenteredText(13, message);
+AmuletPushChangesToDisplay();
+
+first_hour = 0;
+first_min = 0;
+first_sec = 0;
+first_day = 0;
+first_month = 0;
+first_year = 0;
+
+selected_line = 3;
+//five_mins = 300; // 5*60sec = 300sec = 5min
+
+event_type = 0;
+question1_options = 5;
+question2_options = 3;
+question3_options = 5;
+tryCount = 0;
+manualTriggerCount = 0;
+currentBlock = 0;
+
+timeBlock0 = 8;
+timeBlock1 = 12;
+timeBlock2 = 16;
+timeBlock3 = 20;
+
+time1_done = 0;
+time1_done = 0;
+time1_done = 0;
+
+last_event_time = 0;
+
+// Up to 3
+fail_count = 0;
+
+//when app runs the first time
+//generate schedule
+
+
+AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletPushChangesToDisplay();
+
+
+AmuletHapticSingleBuzz();
+generateSchedule();</action>
+     <initial_glyph conn="4,-2,5,0,15,9">
+      <action box="0,-2,10,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="Question1">
+     <entry>//How much stress do you feel right now?
+/*
+None
+A little
+Moderate amount
+A lot
+*/
+
+//set timer for 5mins and if no response
+//reschedule EMA
+//int five_mins = 60 * 5;
+AmuletTimer(300);
+
+
+char question1[17] = &quot;How stressed are&quot;;
+char question2[17] = &quot;you right now?&quot;;
+
+char response1[6] = &quot;None&quot;;
+char response2[8] = &quot;Little&quot;;
+char response3[9] = &quot;Moderate&quot;;
+char response4[6] = &quot;A lot&quot;;
+char response5[6] = &quot;Skip&quot;;
+//char response6[6] = &quot;Back&quot;;
+
+if(should_init==1){
+    AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+    AmuletRegularCenteredText(0, question1);
+    AmuletRegularCenteredText(13, question2);
+    AmuletRegularCenteredText(26, response1);
+    AmuletRegularCenteredText(39, response2);
+    AmuletRegularCenteredText(52, response3);
+    AmuletRegularCenteredText(65, response4);
+    AmuletRegularCenteredText(78, response5);
+    //AmuletRegularCenteredText(91, response6);
+    AmuletPushChangesToDisplay();
+    should_init = 0;
+}
+if(should_update==1){
+    AmuletClearRect(5,13,10,LCD_VERTICAL_MAX);
+    AmuletFillRect(5,13*(response_1+2),10,10);
+    AmuletPushChangesToDisplay();
+    should_update = 0;
+}
+
+
+</entry>
+     <tran trig="AMULET_SLIDER_UP" target="..">
+      <action>if (response_1 - 1 &gt;=0)
+    response_1--;
+should_update = 1;</action>
+      <tran_glyph conn="101,10,1,1,2,4,-2">
+       <action box="0,-2,20,3"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_SLIDER_DOWN" target="..">
+      <action>/*if (selected_line + 1 &lt;=5)
+    selected_line++;*/
+if (response_1 + 1 &lt;= question1_options)
+   response_1 ++;
+
+should_update = 1;</action>
+      <tran_glyph conn="101,16,1,1,2,2,-2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_BUTTON_TAP" target="../../12">
+      <action>AmuletHapticSingleBuzz();
+should_init = 1;
+should_update = 1;</action>
+      <tran_glyph conn="101,20,1,0,1,8,-5,2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_REQ_CHANGE" target="../../3">
+      <action>//AmuletTimerCancel();
+AmuletHapticSingleBuzz();
+tryCount++;</action>
+      <tran_glyph conn="84,23,2,3,2,12,4,20">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="75,6,26,17">
+      <entry box="1,2,22,12"/>
+     </state_glyph>
+    </state>
+    <state name="LogFinalData">
+     <entry>AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletPushChangesToDisplay();
+char message[14] = &quot;Log Final..&quot;;
+AmuletRegularCenteredText(13, message);
+AmuletPushChangesToDisplay();
+AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletPushChangesToDisplay();
+
+//check if we've tried 3 times
+if(fail_count &gt;= 3){
+    fail_count = 0;
+    AmuletStateTransition(ALERT_FAIL_SIG);  
+}else{
+    uint8_t result = logFinalData();
+    //uint8_t result = 1;
+    if (result == 1){
+        fail_count = 0;
+        AmuletStateTransition(APPEND_SUCCESS_SIG);  
+
+    }else{
+        fail_count++;
+        AmuletStateTransition(FAIL_TRY_SIG);  
+    }
+}
+</entry>
+     <tran trig="APPEND_SUCCESS" target="../../11">
+      <action>resetValues();</action>
+      <tran_glyph conn="38,68,3,3,-2,-49,0">
+       <action box="-6,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="APPEND_FAIL" target="../../8">
+      <action>AmuletHapticSingleBuzz(); </action>
+      <tran_glyph conn="38,75,3,1,-2,-2,-14">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="FAIL_TRY" target="..">
+      <tran_glyph conn="67,65,1,1,2,4,-2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="38,61,29,16">
+      <entry box="1,2,22,8"/>
+     </state_glyph>
+    </state>
+    <state name="Reschedule">
+     <entry>char reschedule1[16] = &quot;EMA Rescheduled&quot;;
+char reschedule2[16] =  &quot;for next 30 mins&quot;;
+char reason1[16] = &quot;Reason: &quot;;
+char reason2[16] = &quot;No response&quot;; 
+char reason3[16] = &quot;for 5 mins&quot;;
+
+if (tryCount &gt;=2){
+    //reset tryCount
+    tryCount = 0;
+
+    //skip current time block
+    resetValues();
+
+    //go to sleep state
+    AmuletStateTransition(TO_SLEEP_SIG);
+}
+
+AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletRegularCenteredText(13, reschedule1);
+AmuletRegularCenteredText(26, reschedule2);
+AmuletRegularCenteredText(52, reason1);
+AmuletRegularCenteredText(65, reason2);
+AmuletRegularCenteredText(78, reason3);
+AmuletPushChangesToDisplay();
+//Schedule EMA for next 30 mins (= 60s = 1min * 30).
+//uint16_t rescheduleTime = 30 * 60;
+//AmuletTimer(rescheduleTime);
+AmuletTimer(1800);</entry>
+     <tran trig="AMULET_REQ_CHANGE" target="../../1">
+      <action>AmuletTimerCancel();
+AmuletHapticSingleBuzz();
+should_init = 1;
+should_update = 1;</action>
+      <tran_glyph conn="119,27,0,2,-8,-22,4">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="TO_SLEEP" target="../../11">
+      <tran_glyph conn="116,31,3,2,-7,-3,-51,-4">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="116,27,20,8">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="LogHeader">
+     <entry>char message[12] = &quot;Log Header..&quot;;
+AmuletRegularCenteredText(13, message);
+AmuletPushChangesToDisplay();
+AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletPushChangesToDisplay();
+
+//check if we've tried 3 times
+if(fail_count &gt;= 3){
+    fail_count = 0;
+    AmuletStateTransition(ALERT_FAIL_SIG);
+}else{
+    //uint8_t result = logHeader();
+    uint8_t result = 1;
+    if (result==1){
+        fail_count = 0;
+        AmuletStateTransition(APPEND_SUCCESS_SIG);
+    }else{
+        fail_count++;
+        AmuletStateTransition(FAIL_TRY_SIG);
+    }
+}
+</entry>
+     <tran trig="APPEND_SUCCESS" target="../../11">
+      <tran_glyph conn="28,16,1,3,12,-1,-4">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="ALERT_FAIL" target="../../5">
+      <action>AmuletHapticSingleBuzz(); </action>
+      <tran_glyph conn="16,23,2,0,4,-3,2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="FAIL_TRY" target="..">
+      <tran_glyph conn="11,17,3,3,-3,-3,3">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="11,7,17,16">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="FailAlertLogHeader">
+     <documentation>//alert user to check sd card</documentation>
+     <entry>logFailAlert();</entry>
+     <tran trig="AMULET_BUTTON_TAP" target="../../4">
+      <action>AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletPushChangesToDisplay();</action>
+      <tran_glyph conn="19,29,0,2,-4,3,-2">
+       <action box="-1,-8,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="10,29,14,14">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="LogManualEvent">
+     <entry>AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletPushChangesToDisplay();
+char message[12] = &quot;Log Manual..&quot;;
+AmuletRegularCenteredText(13, message);
+AmuletPushChangesToDisplay();
+AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+AmuletPushChangesToDisplay();
+
+
+//check if we've tried 3 times
+if(fail_count &gt;= 3){
+    fail_count = 0;
+    AmuletStateTransition(ALERT_FAIL_SIG);  
+}else{
+    uint8_t result = logManualEvent();
+    //uint8_t result = 1;
+    if (result == 1){
+
+        fail_count = 0;
+        AmuletStateTransition(BACK_TO_SLEEP_SIG);  
+
+    }else{
+        fail_count++;
+        AmuletStateTransition(FAIL_TRY_SIG);  
+    }
+}
+</entry>
+     <tran trig="FAIL_TRY" target="..">
+      <tran_glyph conn="62,53,1,1,3,2,-3">
+       <action box="0,13,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="BACK_TO_SLEEP" target="../../11">
+      <tran_glyph conn="42,55,3,3,-8,-43,2">
+       <action box="-3,-6,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="APPEND_FAIL" target="../../7">
+      <action>AmuletHapticSingleBuzz(); </action>
+      <tran_glyph conn="42,56,3,1,-20">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="42,50,20,8">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="FailAlertLogManualEvent">
+     <documentation>//alert user to check sd card</documentation>
+     <entry>logFailAlert();</entry>
+     <tran trig="AMULET_BUTTON_TAP" target="../../6">
+      <tran_glyph conn="19,49,0,3,3,23">
+       <action box="-1,-8,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="10,49,12,13">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="FailAlertLogFinalData">
+     <documentation>//alert user to check sd card</documentation>
+     <entry>logFailAlert();</entry>
+     <tran trig="AMULET_BUTTON_TAP" target="../../2">
+      <tran_glyph conn="19,66,0,3,5,19">
+       <action box="-1,-8,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="10,66,12,13">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="Question3">
+     <entry>//Rate your urge to smoke right now?
+/*
+None
+A little
+Moderate amount
+A lot
+*/
+AmuletTimer(300);
+
+char question1[18] = &quot;Rate your urge to&quot;;
+char question2[12] = &quot;smoke now?&quot;;
+
+char response1[5] = &quot;None&quot;;
+char response2[7] = &quot;Little&quot;;
+char response3[9] = &quot;Moderate&quot;;
+char response4[6] = &quot;A lot&quot;;
+char response5[5] = &quot;Skip&quot;;
+//char response6[5] = &quot;Back&quot;;
+
+if(should_init==1){
+    AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+    AmuletRegularCenteredText(0, question1);
+    AmuletRegularCenteredText(13, question2);
+    AmuletRegularCenteredText(26, response1);
+    AmuletRegularCenteredText(39, response2);
+    AmuletRegularCenteredText(52, response3);
+    AmuletRegularCenteredText(65, response4);
+    AmuletRegularCenteredText(78, response5);
+    //AmuletRegularCenteredText(91, response6);
+    AmuletPushChangesToDisplay();
+    should_init = 0;
+}
+if(should_update==1){
+    AmuletClearRect(5,13,10,LCD_VERTICAL_MAX);
+    AmuletFillRect(5,13*(response_3+2),10,10);
+    AmuletPushChangesToDisplay();
+    should_update = 0;
+}
+
+</entry>
+     <tran trig="AMULET_SLIDER_UP" target="..">
+      <action>if (response_3 - 1 &gt;=0)
+    response_3--;
+
+should_update = 1;</action>
+      <tran_glyph conn="105,62,1,1,2,4,-2">
+       <action box="0,-2,20,3"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_SLIDER_DOWN" target="..">
+      <action>/*if (selected_line + 1 &lt;=5)
+    selected_line++;*/
+
+if (response_3 + 1 &lt;= question3_options)
+   response_3 ++;
+
+should_update = 1;</action>
+      <tran_glyph conn="105,68,1,1,2,2,-2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_BUTTON_TAP" target="../../2">
+      <action>AmuletHapticSingleBuzz();
+if (event_type == 0){
+    manualTriggerCount++;
+}
+//AmuletHapticSingleBuzz();</action>
+      <tran_glyph conn="79,71,3,1,-3,3,-9">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_BUTTON_HOLD" target="../../12">
+      <action>AmuletHapticSingleBuzz();
+should_init = 1;
+should_update = 1;</action>
+      <tran_glyph conn="97,58,0,2,-7,-6,-4">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_REQ_CHANGE" target="../../3">
+      <action>//AmuletTimerCancel();
+AmuletHapticSingleBuzz();
+tryCount++;</action>
+      <tran_glyph conn="105,72,1,2,20,-37">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="79,58,26,17">
+      <entry box="1,2,22,12"/>
+     </state_glyph>
+    </state>
+    <state name="CheckEventType">
+     <entry>//alert user with haptic buzzer
+AmuletHapticSingleBuzz();
+
+//get the input
+AmuletDisplayClr();
+char mess[16] = &quot;Logging First&quot;;
+AmuletDisplayMessage(mess, 2);
+
+//char first_sec_string[2];
+//char first_min_string[2];
+//char first_hour_string[2];
+//char first_day_string[2];
+//char first_month_string[2];
+//char first_year_string[4];
+
+first_sec = AmuletClock(SECOND);
+first_min = AmuletClock(MINUTE);
+first_hour = AmuletClock(HOUR);
+first_day = AmuletClock(DAY);
+first_month = AmuletClock(MONTH);
+first_year = AmuletClock(YEAR);
+
+//convert for time when trigger is received
+//AmuletITOA(first_sec, first_sec_string);
+//AmuletITOA(first_min, first_min_string);
+//AmuletITOA(first_hour, first_hour_string);
+//AmuletITOA(first_month, first_month_string);
+//AmuletITOA(first_day, first_day_string);
+//AmuletITOA(first_year, first_year_string);
+
+
+int diff =  first_hour - last_event_time; 
+//check if manual event and if max
+//count for EMA hasn't been reached 
+//for the day and more than 2 hour diff
+if (event_type == 0 &amp;&amp; manualTriggerCount &lt; 3 &amp;&amp; diff&gt;=2){
+
+     //Bring app to front so the user can interact with the display
+
+     //Check if app is at the foreground
+     bool result = AmuletIsForegroundApp();
+
+     if(!result){
+        result = AmuletRequestMoveToFront();            
+     }
+
+     last_event_time = first_hour;
+     AmuletStateTransition(APPEND_SUCCESS_SIG);  
+
+} else if (event_type == 1){
+
+    //Bring app to front so the user can interact with the display
+
+     //Check if app is at the foreground
+     bool result = AmuletIsForegroundApp();
+
+     if(!result){
+        result = AmuletRequestMoveToFront();            
+     }
+
+      AmuletStateTransition(APPEND_SUCCESS_SIG);  
+
+
+//check 
+}else {
+     AmuletStateTransition(TO_LOG_MANUAL_EVENT_SIG);
+}
+</entry>
+     <tran trig="TO_LOG_MANUAL_EVENT" target="../../6">
+      <tran_glyph conn="56,47,2,0,1,-4,2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="APPEND_SUCCESS" target="../../1">
+      <action>should_init = 1;
+should_update = 1;</action>
+      <tran_glyph conn="67,41,1,2,2,-12,9,-6">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="40,31,27,16">
+      <entry box="1,2,26,9"/>
+     </state_glyph>
+    </state>
+    <state name="Sleep">
+     <entry>AmuletTimer(60);
+
+char message[9] = &quot;EMA Mode&quot;;
+
+AmuletClearRect(0,0,128,110);
+
+AmuletRegularCenteredText(13, message);
+
+response_1 = question1_options/2;
+response_2 = question2_options/2;
+response_3 = question3_options/2;
+
+int timeForSchedule = isTimeForSchedule();
+char time_now_s[16];
+uint8_t time_now = AmuletClock(HOUR);
+AmuletITOA(time_now, time_now_s);
+
+
+//check if it's time to generate schedule
+if (timeForSchedule){
+    manualTriggerCount = 0;
+    generateSchedule();
+}
+
+int active = isActive();
+
+
+
+if (active){
+    char active_info[16] = &quot;Active&quot;;
+    AmuletRegularCenteredText(78, active_info);
+}else{
+    char active_info[16] = &quot;Not Active&quot;;
+    AmuletRegularCenteredText(78, active_info);
+}
+
+//char emode1[13];
+//char num[2];
+//char block[1];
+
+//char colon[2] = &quot;:&quot;;
+
+//uint8_t time_of_day_hours = AmuletClock(HOUR);
+//uint8_t time_of_day_minutes = AmuletClock(MINUTE);
+
+//timeBlock[0] = 8;
+//int test[2];
+//test[0] = 8;
+//int time = test[0];
+
+//char min_string[3];
+//char hour_string[3];
+
+//AmuletITOA(time_of_day_minutes, min_string);
+//AmuletITOA(time_of_day_hours, hour_string);
+
+//char data_two_digi[6];
+//AmuletConcat(data_two_digi, hour_string);
+//AmuletConcat(data_two_digi, colon);
+//char zero[2] = &quot;0&quot;;
+//if (time_of_day_minutes &lt; 10)
+//        AmuletConcat(data_two_digi,zero);
+//AmuletConcat(data_two_digi, min_string);
+
+char num[3];
+AmuletITOA(time1, num);
+AmuletRegularCenteredText(26, num);
+AmuletITOA(time2, num);
+AmuletRegularCenteredText(39, num);
+AmuletITOA(time3, num);
+AmuletRegularCenteredText(52, num);
+AmuletRegularCenteredText(65, time_now_s);
+
+
+//AmuletCenteredText(91, data_two_digi);
+AmuletPushChangesToDisplay();
+
+//if in active time of the day 
+//check if it's time for showing EMA
+if (active){
+    int timeUp = isTimeUp();
+    if (timeUp){
+        AmuletStateTransition(TO_LOGFIRST_SIG);
+    }
+}
+
+//AmuletStateTransition(TO_LOGFIRST_SIG);</entry>
+     <tran trig="AMULET_BOTH_HOLD" target="../../10">
+      <action brief="UserEventTriger">event_type = 0;
+</action>
+      <tran_glyph conn="58,24,2,0,5,-3,2">
+       <action box="-1,-3,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_REQ_CHANGE" target="..">
+      <action>//AmuletTimerCancel();
+//AmuletLEDOn(EXTERNAL_RED);
+//AmuletHapticSingleBuzz();
+event_type = 1;
+</action>
+      <tran_glyph conn="47,24,2,2,3,-6,-3">
+       <action box="-8,-3,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="TO_LOGFIRST" target="../../10">
+      <action>event_type = 1;</action>
+      <tran_glyph conn="43,24,2,0,6,3,1">
+       <action box="1,-4,14,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="36,6,25,18">
+      <entry box="1,2,22,10"/>
+     </state_glyph>
+    </state>
+    <state name="Question2">
+     <entry>/*
+Are you with 
+other people?
+Yes
+No
+
+*/
+AmuletTimer(300);
+
+char question1[17] = &quot;Are you with&quot;;
+char question2[17] = &quot;other people?&quot;;
+
+char response1[4] = &quot;Yes&quot;;
+char response2[3] = &quot;No&quot;;
+char response3[5] = &quot;Skip&quot;;
+//char response4[5] = &quot;Back&quot;;
+
+if(should_init==1){
+    AmuletClearRect(0,0,LCD_HORIZONTAL_MAX,LCD_VERTICAL_MAX);
+    AmuletRegularCenteredText(0, question1);
+    AmuletRegularCenteredText(13, question2);
+    AmuletRegularCenteredText(26, response1);
+    AmuletRegularCenteredText(39, response2);
+    AmuletRegularCenteredText(52, response3);
+    //AmuletRegularCenteredText(65, response4);
+    AmuletPushChangesToDisplay();
+    should_init = 0;
+}
+if(should_update==1){
+    AmuletClearRect(5,13,10,LCD_VERTICAL_MAX);
+    AmuletFillRect(5,13*(response_2+2),10,10);
+    AmuletPushChangesToDisplay();
+    should_update = 0;
+}
+
+</entry>
+     <tran trig="AMULET_SLIDER_UP" target="..">
+      <action>if (response_2 - 1 &gt;=0)
+    response_2--;
+
+should_update = 1;</action>
+      <tran_glyph conn="100,34,1,1,2,4,-2">
+       <action box="0,-2,20,3"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_SLIDER_DOWN" target="..">
+      <action>/*if (selected_line + 1 &lt;=5)
+    selected_line++;*/
+
+if (response_2 + 1 &lt;= question2_options)
+   response_2 ++;
+
+should_update = 1;</action>
+      <tran_glyph conn="100,40,1,1,2,2,-2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_BUTTON_TAP" target="../../9">
+      <action>AmuletHapticSingleBuzz();
+should_init = 1;
+should_update = 1;</action>
+      <tran_glyph conn="87,47,2,0,7,6,4">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_BUTTON_HOLD" target="../../1">
+      <action>AmuletHapticSingleBuzz();
+should_init = 1;
+should_update = 1;</action>
+      <tran_glyph conn="91,30,0,2,-11,-10,4">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_REQ_CHANGE" target="../../3">
+      <action>//AmuletTimerCancel();
+AmuletHapticSingleBuzz();
+tryCount++;</action>
+      <tran_glyph conn="100,45,1,2,22,-10">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="74,30,26,17">
+      <entry box="1,2,22,12"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="149,87"/>
+   </statechart>
+  </class>
+  <attribute name="AO_EMA_App" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="EMA_App_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>EMA_App *me = (EMA_App *)AO_EMA_App;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;EMA_App_initial);
+</code>
+  </operation>
+  <operation name="setBlockNumber" type="void" visibility="0x01" properties="0x02">
+   <code>uint8_t currentMin = AmuletClock(MINUTE);
+uint8_t currentHour = AmuletClock(HOUR);
+
+
+if (currentHour &gt;= timeBlock[0]
+&amp;&amp; currentHour &lt; timeBlock[1]){
+    currentBlock = 0;
+}else if (currentHour &gt;= timeBlock[1]
+&amp;&amp; currentHour &lt; timeBlock[2]){
+    currentBlock = 1;
+}else if (currentHour &gt;= timeBlock[2]
+&amp;&amp; currentHour &lt; timeBlock[3]){
+  currentBlock = 2;
+
+}
+
+</code>
+  </operation>
+ </package>
+ <directory name="directory1"/>
+</model>

@@ -1,0 +1,68 @@
+group C;
+
+// START: arrayDeclaration
+arrayDeclaration(arrayType, arrayName, arraySize) ::= <<
+<arrayType> __internal_<arrayName>[<arraySize>];
+__<arrayType>_array <arrayName> = { .values = __internal_<arrayName>, .__arr_len = <arraySize> };
+>>
+// END: arrayDeclaration
+
+// START: arrayDeclarationWithInit
+arrayDeclarationWithInit(arrayType, arrayName, arraySize, arrayInit) ::= <<
+<arrayType> __internal_<arrayName>[<arraySize>] = <arrayInit>;
+__<arrayType>_array <arrayName> = { .values = __internal_<arrayName>, .__arr_len = <arraySize> };
+>>
+// END: arrayDeclarationWithInit
+
+// START: arrayAssignment
+arrayAssignment(arrayName, arrayIndex, value, assignmentOp) ::= <<
+if (<arrayIndex> >= 0 && <arrayName>.__arr_len > <arrayIndex>) {
+	<arrayName>.values[<arrayIndex>] <assignmentOp> <value>;
+}
+>>
+// END: arrayAssignment
+
+// START: arrayAssignmentWithoutCheck
+arrayAssignmentWithoutCheck(arrayName, arrayIndex, value, assignmentOp) ::= <<
+<arrayName>.values[<arrayIndex>] <assignmentOp> <value>;
+>>
+// END: arrayAssignmentWithoutCheck
+
+// START: arrayAssignmentWithArrayAccess
+arrayAssignmentWithArrayAccess(arrayName, arrayIndex, assignmentOp, arrayToBeRead, arrayReadIndex) ::= <<
+if (<arrayIndex> >= 0 && <arrayName>.__arr_len > <arrayIndex>) {
+	<arrayName>.values[<arrayIndex>] <assignmentOp> __read_array(<arrayToBeRead>,<arrayReadIndex>);
+}
+>>
+// END: arrayAssignmentWithArrayAccess
+
+// START: arrayAccess
+arrayAccess(arrayName, arrayIndex) ::= <<
+__read_array(<arrayName>,<arrayIndex>)
+>>
+// END: arrayAccess
+
+// START: apiLogCallWithArgs
+apiLogCallWithArgs(apiDef, appLogId, arguments, appId) ::= <<
+<apiDef>(<appLogId>,<arguments>,<appId>)
+>>
+// END: apiLogCallWithArgs
+
+// START: apiCallWithArgs
+apiCallWithArgs(apiDef, arguments, appId) ::= <<
+<apiDef>(<arguments>,<appId>)
+>>
+// END: apiCallWithArgs
+
+// START: apiCallWithoutArgs
+apiCallWithoutArgs(apiDef, appId) ::= <<
+<apiDef>(<appId>)
+>>
+// END: apiCallWithoutArgs
+
+// START: apiCallStateTransition
+apiCallStateTransition(apiDef, appName, sig, appId) ::= <<
+<apiDef>(AO_<appName>, <appName>_<sig>, <appId>)
+>>
+// END: apiCallStateTransition
+

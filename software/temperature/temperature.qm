@@ -1,0 +1,100 @@
+<!--
+
+Copyright 2016 by the Trustees of Dartmouth College and Clemson University, 
+and distributed under the terms of the "Dartmouth College Non-Exclusive Research
+Use Source Code License Agreement" (for NON-COMMERCIAL research purposes only),
+as detailed in a file named LICENSE.pdf within this repository.
+
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="Temperature" superclass="qpc::QActive">
+   <attribute name="max_temp" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="min_temp" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="current_temp" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="current_temp_count" type="int8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="last_day" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="counter" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <statechart>
+    <initial target="../1">
+     <action>AmuletTimer(4);
+max_temp = 0;
+min_temp = 250;
+current_temp_count = 0;
+current_temp = 0;
+counter = 0;
+last_day = 0;</action>
+     <initial_glyph conn="12,3,4,0,8,22,6">
+      <action box="0,-2,42,6"/>
+     </initial_glyph>
+    </initial>
+    <state name="Collect">
+     <entry>
+current_temp = AmuletGetTemperature();
+
+// Don't update min/max until after 10 cycles
+// since it gets bad readings at first
+// Also, reset every day
+uint8_t day = AmuletClock(DAY);
+if(counter &lt; 10 || last_day != day) {
+    max_temp = current_temp;
+    min_temp = current_temp;
+}
+else {
+    max_temp = max_temp&lt;current_temp?current_temp:max_temp;
+    min_temp = min_temp&gt;current_temp?current_temp:min_temp;
+}
+last_day = day;
+counter++;
+
+// Print current tempurature
+char temp_to_display[5];
+char F[2] = &quot;F&quot;;
+AmuletITOA(current_temp,temp_to_display);
+AmuletConcat(temp_to_display,F);
+char msg[13] = &quot;Temperature:&quot;;
+AmuletClearRect(0,15,127,REGULAR_FONT_SIZE);
+AmuletRegularCenteredText(15, msg);
+AmuletClearRect(0,32,127,BOLD_FONT_SIZE);
+AmuletBoldCenteredText(32, temp_to_display);
+
+//max and min
+char max_min[18] = &quot;Max: &quot;;
+char max_t[4];
+AmuletITOA(max_temp,max_t);
+AmuletConcat(max_min, max_t);
+char msg_min[8] = &quot;  Min: &quot;;
+AmuletConcat(max_min, msg_min);
+char min_t[4];
+AmuletITOA(min_temp,min_t);
+AmuletConcat(max_min, min_t);
+AmuletClearRect(0,75,127,REGULAR_FONT_SIZE);
+AmuletRegularCenteredText(75, max_min);
+
+AmuletPushChangesToDisplay();</entry>
+     <tran trig="AMULET_REQ_CHANGE" target="..">
+      <tran_glyph conn="22,46,2,2,11,17,-11">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="15,17,31,29">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="130,94"/>
+   </statechart>
+  </class>
+  <attribute name="AO_Temperature" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="Temperature_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>Temperature *me = (Temperature *)AO_Temperature;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;Temperature_initial);
+//QTimeEvt_ctor(&amp;me-&gt;timeEvt, REQ_CHANGE_SIG);
+
+</code>
+  </operation>
+ </package>
+ <directory name="./"/>
+ <directory name="./"/>
+</model>

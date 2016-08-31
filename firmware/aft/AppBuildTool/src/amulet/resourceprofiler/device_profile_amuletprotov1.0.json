@@ -1,0 +1,292 @@
+{
+    "device_information" : {
+        "device_name" : "Zyp Prototype v1.0",
+        "battery_size" : 110,
+        "battery_size_units" : "milli-amp-hour",
+        "volatile_mem_type" : "SRAM",
+        "volatile_mem_size_bytes" : 2048,
+        "non_volatile_mem_type" : "FRAM",
+        "non_volatile_mem_size_bytes" : 128000,
+        "secondary_storage_type" : "SD",
+        "secondary_storage_size_bytes" : 8e+9,
+        "instructions_per_loc" : 17.0,
+        "basic_instruction_power" : 0.002191545,
+        "basic_instruction_time" : 0.000001,
+        "basic_loc_time_unit" : "sec"
+    },
+
+    "steady_state_info" : {
+        "radio_board_sleep_power" : 0.0,
+        "app_board_sleep_power" :   0.000048877,
+        "_original_app_board_sleep_power" :   0.000048877,
+        "_sd_app_board_sleep_power" :   0.000328877,
+        "_captouch_sd_app_board_sleep_power" :   0.000888877,
+        "sensor_accelerometer":     0.000029713,
+        "sensor_heartrate":         0.00015702
+    },
+
+    "api_calls": [
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletBoldText", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.026386499999944135, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletAddGraph", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 7.199999981821747e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletDrawWalkerImage", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.04218100000025515, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletTimerCancel", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 6.900000016685226e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletDrawFastHLine", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 9.950000026037742e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426691999999995, 
+    "resource_name": "AmuletITOA", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 7.099999999127249e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletWeekText", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 6.60000000607397e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletDrawRect", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.0010539999998400162, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletConcat", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 6.355000002713495e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletMediumText", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.005735000000186119, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletMediumCenteredText", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.005824000000302476, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426691999999995, 
+    "resource_name": "AmuletDrawFastVLine", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.0005448333333788469, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426691999999995, 
+    "resource_name": "AmuletRegularCenteredText", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.009053999999991902, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletBoldCenteredText", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.030328333333272894, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletTimer", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 6.60000000607397e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletDrawLine", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.0021520000000236905, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletRegularText", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.00910499999986314, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletDrawHeartImage", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.02714399999968009, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletAddGraphData", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 6.000000030326191e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletDateTimeText", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.0004965000000538566, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletTextWidth", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 6.100000018705032e-05, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletDrawGraph", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.008342999999968015, 
+    "time_unit": "sec"
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+  {
+    "avg_power": 0.002396920779169526, 
+    "resource_name": "AmuletDisplayMessage", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.029824000000000222, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0010466431865926327, 
+    "resource_name": "AmuletGetADC", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.001464000000000946, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.002591267015918463, 
+    "resource_name": "AmuletDisplayClrLN", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.019943500000000114, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0012864554544826474, 
+    "resource_name": "AmuletGetTemperature", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.009368000000002041, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0008112875899120723, 
+    "resource_name": "AmuletGetLightLevel", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.0014669999999981087, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0017504269933375956, 
+    "resource_name": "AmuletGetAudio", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.001470999999995115, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0011411231999999998, 
+    "resource_name": "AmuletGetBatteryLevel", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.0002910000000042601, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.04567477604528289,
+    "resource_name": "AmuletLogRead",
+    "resource_type": "amulet_api_function_call",
+    "time": 0.08344799999997576,
+    "time_unit": "sec"
+  },
+  {
+    "avg_power": 0.003063749788665548, 
+    "resource_name": "AmuletPushChangesToDisplay", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.01914499999999464, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.04675696253,
+    "resource_name": "AmuletLogAppend",
+    "resource_type": "amulet_api_function_call",
+    "time": 0.47036500000003343,
+    "time_unit": "sec"
+  },
+  {
+    "avg_power": 0.0019158641254763283, 
+    "resource_name": "AmuletDisplayClr", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 0.040779000000000565, 
+    "time_unit": "sec"
+  }
+
+
+
+
+
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletClearRect", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 6.00393700838e-07, 
+    "time_unit": "sec"
+  }, 
+  {
+    "avg_power": 0.0021426692, 
+    "resource_name": "AmuletFillRect", 
+    "resource_type": "amulet_api_function_call", 
+    "time": 1.0128608459673345e-06, 
+    "time_unit": "sec"
+  }
+  ]
+}

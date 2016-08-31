@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.2.2">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+ </package>
+ <directory name="./">
+  
+ </directory>
+</model>

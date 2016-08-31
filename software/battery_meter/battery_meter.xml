@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <application>
+        <name>Battery Log</name>
+        <short_name>B</short_name>
+        <app_status>TYPE_DEBUG_APP</app_status>
+        <app_description>
+        A simple app to check the battery meter. This application also logs the battery stats over time to the SD card.
+        </app_description>
+    </application>
+
+    <permissions>
+        <api name="AmuletTimer" />
+        <api name="AmuletDisplayClr" />
+        <api name="AmuletITOA" />
+        <api name="AmuletConcat" />
+        <api name="AmuletDisplayMessage" />
+        <api name="AmuletGetBatteryLevel" />
+        <api name="AmuletGetADC" />
+        <api name="AmuletSetFont" />
+        <api name="AmuletCenteredText" />
+        <api name="AmuletPushChangesToDisplay" />
+        <api name="AmuletDrawRect" />
+        <api name="AmuletClearRect" />
+        <api name="AmuletFillRect" />
+        <api name="AmuletTextWidth" />
+        <api name="AmuletTextHeight" />
+        <api name="AmuletDateTimeText" />
+        <api name="AmuletLogAppend" />
+                <api name="AmuletRegularCenteredText" />
+        <api name="AmuletBoldCenteredText" />
+        <api name="AmuletMediumCenteredText" />
+        <api name="AmuletStateTransition" />
+        
+    </permissions>
+</manifest>

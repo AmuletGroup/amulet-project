@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <application>
+        <name>Sunlight</name>
+        <short_name>SE</short_name>
+        <app_status>TYPE_DEBUG_APP</app_status>
+        <app_description>
+        The sun exposure application is designed to measure the amount of sunlight the user
+        has been exposed to, for medical purrposes. It is timer based: the light sensor is
+        queried every time a 'timer' event fires. The amounto of sun is shown in a graphical view.
+        </app_description>
+    </application>
+
+    <permissions>
+        <api name="AmuletTimer" />
+        <api name="AmuletLogAppend" />
+        <api name="AmuletLogRead" />
+        <api name="AmuletDisplayClr" />
+        <api name="AmuletClock" />
+        <api name="AmuletITOA" />
+        <api name="AmuletConcat" />
+        <api name="AmuletClockText" />
+        <api name="AmuletWeekText" />
+        <api name="AmuletDateText" />
+        <api name="AmuletDisplayMessage" />
+        <api name="AmuletLEDOn" />
+        <api name="AmuletLEDOff" />
+        <api name="AmuletSprintf" />
+        <api name="AmuletSDPresent" />
+        <api name="AmuletGetLightLevel" />
+        <api name="AmuletSetFont" />
+        <api name="AmuletText" />
+        <api name="AmuletCenteredText" />
+        <api name="AmuletPushChangesToDisplay" />
+        <api name="AmuletDrawRect" />
+        <api name="AmuletClearRect" />
+        <api name="AmuletFillRect" />
+        <api name="AmuletTextWidth" />
+        <api name="AmuletTextHeight" />
+        <api name="AmuletDrawFastVLine" />
+        <api name="AmuletDrawLine" />
+        <api name="AmuletRegularCenteredText" />
+        <api name="AmuletBoldCenteredText" />
+        <api name="AmuletMediumCenteredText" />
+        <api name="AmuletRegularText" />        
+        <api name="AmuletStateTransition" />        
+        
+    </permissions>
+</manifest>

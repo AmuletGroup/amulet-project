@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <application>
+        <name>Temperature</name>
+        <short_name>T</short_name>
+        <app_status>TYPE_DEBUG_APP</app_status>
+        <app_description>
+        The temperature application is designed to read the temperature sensor every
+        time the timer is fired. It keeps a running min and max for the day.
+        </app_description>
+    </application>
+
+    <permissions>
+        <api name="AmuletTimer" />
+        <api name="AmuletLogAppend" />
+        <api name="AmuletLogRead" />
+        <api name="AmuletDisplayClr" />
+        <api name="AmuletClock" />
+        <api name="AmuletITOA" />
+        <api name="AmuletConcat" />
+        <api name="AmuletClockText" />
+        <api name="AmuletWeekText" />
+        <api name="AmuletDateText" />
+        <api name="AmuletDisplayMessage" />
+        <api name="AmuletLEDOn" />
+        <api name="AmuletLEDOff" />
+        <api name="AmuletSprintf" />
+        <api name="AmuletSDPresent" />
+        <api name="AmuletGetTemperature" />
+        <api name="AmuletSetFont" />
+        <api name="AmuletText" />
+        <api name="AmuletCenteredText" />
+        <api name="AmuletPushChangesToDisplay" />
+        <api name="AmuletDrawRect" />
+        <api name="AmuletClearRect" />
+        <api name="AmuletFillRect" />
+        <api name="AmuletTextWidth" />
+        <api name="AmuletTextHeight" />
+        <api name="AmuletRegularCenteredText" />
+        <api name="AmuletBoldCenteredText" />
+        <api name="AmuletMediumCenteredText" />
+    </permissions>
+</manifest>

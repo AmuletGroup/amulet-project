@@ -1,0 +1,250 @@
+<!--
+
+Copyright 2016 by the Trustees of Dartmouth College and Clemson University, 
+and distributed under the terms of the "Dartmouth College Non-Exclusive Research
+Use Source Code License Agreement" (for NON-COMMERCIAL research purposes only),
+as detailed in a file named LICENSE.pdf within this repository.
+
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="Clock" superclass="qpc::QActive">
+   <attribute name="minutes" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="hour" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="day" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="month" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="year" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="temp" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="option" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <statechart>
+    <initial target="../1">
+     <action>AmuletTimer(1);
+minutes = 99;
+hour = 0;
+day = 0;
+month = 0;
+year = 0;
+temp = 200;
+
+// Used to set the current date/time
+option = 0;</action>
+     <initial_glyph conn="10,12,5,0,19,1">
+      <action box="0,-2,4,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="Normal">
+     <entry>
+uint8_t refresh_display = 0; // Set to 1 if needed
+
+uint8_t new_minutes = AmuletClock(MINUTE);
+
+uint8_t text_height = 0;
+
+//Show refreshed result
+/*if(option == 1){
+    //clear, redraw, and refresh
+} else if(option == 2){
+} else if(option == 3){
+} else if(option == 4){
+} else if(option == 5){
+} else if(option == 6){
+}*/
+
+// Only update clock every minute
+if(new_minutes != minutes || option == 1 || option == 2) {
+    // Build time string
+    char time[13];
+    minutes = new_minutes;
+    hour = AmuletClock(HOUR);
+    uint8_t am_pm = 0;
+    char h[3];
+    // Get am/pm and convert to standard time
+    if (hour &gt; 11) {
+        am_pm = 1;
+        hour -= 12;
+    }
+    if (hour == 0) hour = 12;
+    AmuletITOA(hour,time);
+    char colon[2] = &quot;:&quot;;
+    char zero[2] = &quot;0&quot;;
+    AmuletConcat(time,colon);
+    if (minutes &lt; 10)
+        AmuletConcat(time,zero);
+    char m[3];
+    AmuletITOA(minutes, m);
+    AmuletConcat(time,m);
+    char am[4] = &quot; AM&quot;;
+    char pm[4] = &quot; PM&quot;;
+    if (am_pm == 0)
+        AmuletConcat(time,am);
+    else
+        AmuletConcat(time,pm);
+
+    // Add Time to Display
+    AmuletClearRect(0,31,LCD_HORIZONTAL_MAX,BOLD_FONT_SIZE);
+    AmuletBoldCenteredText(31, time);
+    // TODO: Need activity score or sun exposure score
+    refresh_display = 1;
+}
+
+// Update date once per day:
+uint8_t new_day = AmuletClock(DAY);
+if (new_day != day || option == 3 || option == 4 || option == 5) {
+    // Build date string
+    char date[10];
+    day = new_day;
+    month = AmuletClock(MONTH);
+    year = AmuletClock(YEAR);
+    char div[2] = &quot;/&quot;;
+    AmuletITOA(month,date);
+    AmuletConcat(date,div);
+    char d[3];
+    AmuletITOA(day,d);
+    AmuletConcat(date,d);
+    AmuletConcat(date,div);
+    char y[3];
+    AmuletITOA(year,y);
+    AmuletConcat(date,y);
+
+    // Add Date to Display
+    AmuletClearRect(0,10,LCD_HORIZONTAL_MAX,REGULAR_FONT_SIZE);
+    AmuletRegularCenteredText(10, date);
+    refresh_display = 1;
+}
+
+// Update temperature if changed:
+uint8_t new_temp = AmuletGetTemperature();
+
+if (new_temp != temp) {
+    temp = new_temp;
+    char temp_disp[5];
+    AmuletITOA(temp, temp_disp);
+    char F[2] = &quot;F&quot;;
+    AmuletConcat(temp_disp, F);
+    AmuletClearRect(0,75,LCD_HORIZONTAL_MAX, MEDIUM_FONT_SIZE);
+    AmuletMediumCenteredText(75, temp_disp);
+    refresh_display = 1;
+}
+
+if (refresh_display != 0) {
+    AmuletPushChangesToDisplay();
+}</entry>
+     <tran trig="AMULET_REQ_CHANGE" target="..">
+      <tran_glyph conn="28,13,0,0,-4,8,2,-6,2">
+       <action box="9,-4,21,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_BUTTON_HOLD" target="..">
+      <action>option = option + 1;
+// MINUTE HOUR DAY MONTH YEAR
+if(option == 1){
+    //Draw bar
+    AmuletTurnOnCapTouch();
+    AmuletClearRect(0,54,LCD_HORIZONTAL_MAX, 2);
+    AmuletDrawFastHLine(45, 55, 30);
+    AmuletPushChangesToDisplay();
+    //value = minute;
+} else if(option == 2){
+    //AmuletSetClock(MINUTE, value);
+    AmuletClearRect(0,54,LCD_HORIZONTAL_MAX, 2);
+    AmuletDrawFastHLine(5, 55, 30);
+    AmuletPushChangesToDisplay();
+    //value = hour;
+} else if(option == 3){
+    //AmuletSetClock(HOUR, value);
+    AmuletClearRect(0,54,LCD_HORIZONTAL_MAX, 2);
+    AmuletDrawFastHLine(57, 26, 10);
+    AmuletPushChangesToDisplay();
+    //value = day;
+} else if(option == 4){
+    //AmuletSetClock(DAY, value);
+    AmuletClearRect(0,26,LCD_HORIZONTAL_MAX, 2);
+    AmuletDrawFastHLine(42, 26, 10);
+    AmuletPushChangesToDisplay();
+    //value = month;
+} else if(option &gt;= 5){
+    //AmuletSetClock(MONTH, value);
+    AmuletClearRect(0,26,LCD_HORIZONTAL_MAX, 2);
+    AmuletPushChangesToDisplay();
+    option = 0;
+    //value = year;
+}</action>
+      <tran_glyph conn="39,19,1,2,-9,4">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_SLIDER_UP" target="..">
+      <action>if(option == 1){//MINUTE
+    //value = ((value+1)%60);
+    minutes = ((minutes+1)%60);
+    AmuletSetClock(MINUTE, minutes);
+} else if(option == 2){//HOUR
+    //value = ((value+1)%23);
+    hour = ((hour+1)%23);
+    AmuletSetClock(HOUR, hour);
+} else if(option == 3){//DAY
+    //value = ((value+1)%31);
+    day = day + 1;
+    if(day &gt; 31)
+        day = 1;
+    AmuletSetClock(DAY, day);
+} else if(option == 4){//MONTH
+    //value = ((value+1)%12);
+    month = month + 1;
+    if(month &gt; 12)
+        month = 1;
+    AmuletSetClock(MONTH, month);
+}</action>
+      <tran_glyph conn="39,16,1,2,-19,7">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_SLIDER_DOWN" target="..">
+      <action>if(option == 1){//MINUTE
+    //value = ((value+1)%60);
+    minutes = minutes-1;
+    if(minutes &lt; 0)
+        minutes = 59;
+    AmuletSetClock(MINUTE, minutes);
+} else if(option == 2){//HOUR
+    //value = ((value+1)%23);
+    hour = hour - 1;
+    if(hour &lt; 0)
+        hour = 23;
+    AmuletSetClock(HOUR, hour);
+} else if(option == 3){//DAY
+    //value = ((value+1)%31);
+    day = day - 1;
+    if(day &lt;= 0)
+        day = 31;
+    AmuletSetClock(DAY, day);
+} else if(option == 4){//MONTH
+    //value = ((value+1)%12);
+    month = month - 1;
+    if(month &lt;= 0)
+        month = 12;
+    AmuletSetClock(MONTH, month);
+}</action>
+      <tran_glyph conn="39,21,1,2,-17,2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="19,13,20,10">
+      <entry box="1,2,19,5"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="65,48"/>
+   </statechart>
+  </class>
+  <attribute name="AO_Clock" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="Clock_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>Clock *me = (Clock *)AO_Clock;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;Clock_initial);
+//QTimeEvt_ctor(&amp;me-&gt;timeEvt, REQ_CHANGE_SIG);
+
+</code>
+  </operation>
+ </package>
+</model>

@@ -1,0 +1,159 @@
+<!--
+
+Copyright 2016 by the Trustees of Dartmouth College and Clemson University, 
+and distributed under the terms of the "Dartmouth College Non-Exclusive Research
+Use Source Code License Agreement" (for NON-COMMERCIAL research purposes only),
+as detailed in a file named LICENSE.pdf within this repository.
+
+-->
+
+
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="BatteryMeter" superclass="qpc::QActive">
+   <attribute name="bp" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="last_logged_bp" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="batt_adc" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="_eval_force_counter" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <operation name="LogBatteryData" type="void" visibility="0x00" properties="0x00">
+    <code>char data[50] = &quot;Battery,&quot;;
+
+char comma[2] = &quot;,&quot;;
+char endl[3] = &quot;\n&quot;;
+char dt[21];
+char bp_char[4];
+char adc_char[6];
+// Add Date Time
+AmuletDateTimeText(dt);
+AmuletConcat(data,dt);
+AmuletConcat(data,comma);
+// Current Battery Percent (snapshot)
+AmuletITOA(bp,bp_char);
+AmuletConcat(data,bp_char);
+AmuletConcat(data,comma);
+// Current Battery ADC
+AmuletITOA(batt_adc,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,endl);
+// Add it to the log
+AmuletLogAppend(data);
+</code>
+   </operation>
+   <statechart>
+    <initial target="../1">
+     <action>AmuletTimer(3);
+bp = 0;
+last_logged_bp = 0;</action>
+     <initial_glyph conn="12,3,4,0,8,21,6">
+      <action box="0,-2,42,10"/>
+     </initial_glyph>
+    </initial>
+    <state name="Normal">
+     <entry>bp = AmuletGetBatteryLevel();
+uint8_t text_height = 0;
+
+char battery_level[6];
+AmuletITOA(bp,battery_level);
+char percent[2] = &quot;%&quot;;
+AmuletConcat(battery_level,percent);
+
+// Show battery %
+char msg[10] = &quot;Battery:&quot;;
+AmuletRegularCenteredText(15, msg);
+AmuletClearRect(0,32,LCD_HORIZONTAL_MAX,BOLD_FONT_SIZE);
+AmuletBoldCenteredText(32, battery_level);
+
+// Show battery adc
+batt_adc = AmuletGetADC(BATTERY);
+char adc[13] = &quot;ADC = &quot;;
+char b_adc[6];
+AmuletITOA(batt_adc,b_adc);
+AmuletConcat(adc, b_adc);
+AmuletClearRect(0,75,LCD_HORIZONTAL_MAX,REGULAR_FONT_SIZE);
+AmuletRegularCenteredText(75, adc);
+
+AmuletPushChangesToDisplay();
+
+// Only log if % goes down or up by 2
+// (Keeps it from continually logging when
+//  percent fluctuates up and down by 1%)
+//if (bp &lt; last_logged_bp || bp &gt; last_logged_bp+1) {
+_eval_force_counter++;
+if(_eval_force_counter++ &gt; 10) {
+//    LogBatteryData();
+    AmuletStateTransition(TO_LOG_SIG);
+    last_logged_bp = bp;
+    _eval_force_counter = 0;
+}
+</entry>
+     <tran trig="AMULET_REQ_CHANGE" target="..">
+      <tran_glyph conn="21,46,2,2,11,17,-11">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="TO_LOG" target="../../2">
+      <tran_glyph conn="45,40,1,2,15,-3">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="14,17,31,29">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="Log">
+     <entry>char data[80] = &quot;Battery,&quot;;
+
+char comma[2] = &quot;,&quot;;
+char endl[3] = &quot;\n&quot;;
+char dt[21];
+char bp_char[4];
+char adc_char[6];
+// Add Date Time
+AmuletDateTimeText(dt);
+AmuletConcat(data,dt);
+AmuletConcat(data,comma);
+// Current Battery Percent (snapshot)
+AmuletITOA(bp,bp_char);
+AmuletConcat(data,bp_char);
+AmuletConcat(data,comma);
+// Current Battery ADC
+AmuletITOA(batt_adc,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,endl);
+// Add it to the log
+AmuletLogAppend(data);
+  AmuletStateTransition(TO_STEADY_SIG);</entry>
+     <tran trig="TO_STEADY" target="../../1">
+      <tran_glyph conn="64,23,0,1,-2,-19">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="55,23,17,14">
+      <entry box="1,2,16,9"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="130,94"/>
+   </statechart>
+  </class>
+  <attribute name="AO_BatteryMeter" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="BatteryMeter_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>BatteryMeter *me = (BatteryMeter *)AO_BatteryMeter;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;BatteryMeter_initial);
+//QTimeEvt_ctor(&amp;me-&gt;timeEvt, REQ_CHANGE_SIG);
+
+</code>
+  </operation>
+ </package>
+ <directory name="./"/>
+ <directory name="./"/>
+</model>

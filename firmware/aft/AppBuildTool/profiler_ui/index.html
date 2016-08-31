@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="css/joint.css" />
+
+    <!--Import Google Icon Font-->
+    <link href="http://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <!--Import materialize.css-->
+    <link type="text/css" rel="stylesheet" href="css/materialize.min.css"  media="screen,projection"/>
+
+    <!--Let browser know website is optimized for mobile-->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <script src="js/jquery.min.js"></script>
+    <script type="text/javascript" src="js/underscore-min.js"></script>
+    <script src="js/lodash.min.js"></script>
+    <script src="js/backbone-min.js"></script>
+    <script src="js/graphlib.min.js"></script>
+    <script src="js/dagre.min.js"></script>
+    <script src="js/joint.js"></script>
+    <script src="js/joint.shapes.fsa.js"></script>
+    <script src="js/joint.layout.DirectedGraph.js"></script>
+    <script src="js/moment.min.js"></script>
+    <script type="text/javascript" src="js/json2html.js"></script>
+    <script type="text/javascript" src="js/jquery.json2html.js"></script>
+    <script type="text/javascript" src="costs_gen.js"></script>
+    <script type="text/javascript" src="graph_structure.js"></script>
+    <script type="text/javascript" src="compiled_mem_stats.js"></script>
+    <script src="js/compute.js"></script>
+    <script src="js/visuals.js"></script>
+    <script type="text/javascript" src="js/materialize.min.js"></script>
+    <style> 
+    .squeeze {
+        margin-top: 0px;
+        margin-bottom: 0px;
+    }
+    </style>
+    <title>Resource Profiler</title>
+</head>
+<body>
+    <main>
+        
+    <!-- Page Layout here -->
+    <div class="row ">
+
+      <div class="col s12 m8 l9">
+        
+        <!-- Help text w/ modal trigger to more detailed help text. -->
+        <div class="center-align squeeze">
+            <p id="help_text" style="font-size: 16px; margin-bottom: 3px; margin-top: 3px;">Please see the Resource Profiler <b><a data-target="modal1" class="modal-trigger waves-effect waves-light">documentation</a></b> for more info.</p>
+        </div>     
+        <div class="divider" style="margin-bottom: 3px;"></div>
+
+        <!-- FSM container  -->
+        <div id="main_graph_div"></div>
+        <div class="divider"></div>
+
+        <div class="section">
+            <div class="row squeeze">
+              <div class="input-field col s3">
+                <select id="dev_select">
+                  <!-- <option value="0" selected>NONE</option> -->
+                </select>
+                <label>Device Selection</label>
+                </div>
+                <div class="input-field col s2">
+                    <input disabled value="0" id="battery_size" type="text" class="validate">
+                    <label class="active" for="battery_size">Battery Size (mAh)</label>
+                </div>
+                <div class="input-field col s2">
+                    <input disabled value="0.0" id="app_mem" type="text" class="validate">
+                    <label class="active" for="app_mem">Total Memory (KB)</label>
+                </div>
+                <div class="input-field col s2">
+                    <input  disabled value="0.0" id="app_ram" type="text" class="validate">
+                    <label class="active" for="app_ram">Total RAM (KB)</label>
+                </div>  
+                <div class="input-field col s3">
+                    <input  disabled value="Linear Model" id="prediction_method" type="text" class="validate">
+                    <label class="active" for="prediction_method">Prediction Method</label>
+<!--
+                     <select>
+                        <option value="1">Linear Model</option>
+                    </select>
+                    <label>Prediction Method</label>
+-->
+                </div>           
+            </div>
+
+            <!-- - - - - - - - - - - - - App-wide Stats - - - - - - - - - - - -->
+
+            <!-- Single-App Model: Lifetime Row for the Selected Application *ONLY* -->
+            <div class="row valign-wrapper squeeze">
+                <h5 class="col s5 valign center-align" style="font-size: 16px;">(Single App Model) Selected Application's Battery Impact Per Week</h5>
+                <p id="lifetime_estimate_text_single_app" style="font-size: 16px;" class="col s5 valign center-align"></p>
+            </div>     
+
+            <!-- Single-App Model: Memory Use (FRAM) Row -->       
+            <div class="row valign-wrapper squeeze">
+                <h5 id="app_mem_usage" style="font-size: 16px;" class="col s5 valign center-align">Memory Use (FRAM)<br> (<em>30<sub>system</sub></em> + <b>0.9<em><sub>app</sub></em></b>)/64<em><sub>total</sub></em></h5>
+                <div id="app_mem_usage_progress" class="progress col s5 valign">
+                      <div id="app_mem_usage_progress_width" class="determinate" style="width: 30%"></div>
+                </div>
+            </div>
+
+            <!-- Single-App Model: Max RAM Use (SRAM) Row -->       
+            <div class="row valign-wrapper squeeze">
+                <h5 id="app_local_usage" style="font-size: 16px;" class="col s5 valign center-align">Max Ram Use (SRAM)<br> (<em>240<sub>system</sub></em> + <b>68<em><sub>app</sub></em></b>)/2048<em><sub>total</sub></em></h5>
+                <div id="app_local_usage_progress" class="progress col s5 valign">
+                      <div d="app_local_usage_progress_width" class="determinate" style="width: 30%"></div>
+                </div>
+            </div>
+
+            <!-- - - - - - - - - - - - System-wide Stats - - - - - - - - - - -->
+            <br>
+            <br>
+            <hr width="75%"> 
+
+            <!-- Multi-App Model: Lifetime Row for *All* Applications Included in Firmware Image -->
+            <div class="row valign-wrapper squeeze">
+                <h5 class="col s5 valign center-align" style="font-size: 16px;">(Multi App Model) System-wide Battery Impact Per Week</h5>
+                <p id="lifetime_estimate_text_multi_app" style="font-size: 16px;" class="col s5 valign center-align"></p>
+            </div>     
+
+            <!-- Multi-App Model: Memory Use (FRAM) Row -->       
+            <div class="row valign-wrapper squeeze">
+                <h5 id="all_app_mem_usage" style="font-size: 16px;" class="col s5 valign center-align">Memory Use (FRAM)<br> (<em>30<sub>system</sub></em> + <b>0.9<em><sub>app</sub></em></b>)/64<em><sub>total</sub></em></h5>
+                <div id="all_app_mem_usage_progress" class="progress col s5 valign">
+                      <div id="all_app_mem_usage_progress_width" class="determinate" style="width: 30%"></div>
+                </div>
+            </div>
+
+            <!-- Multi-App Model: Max RAM Use (SRAM) Row -->       
+            <div class="row valign-wrapper squeeze">
+                <h5 id="all_app_local_usage" style="font-size: 16px;" class="col s5 valign center-align">Max Ram Use (SRAM)<br> (<em>240<sub>system</sub></em> + <b>68<em><sub>app</sub></em></b>)/2048<em><sub>total</sub></em></h5>
+                <div id="all_app_local_usage_progress" class="progress col s5 valign">
+                      <div d="all_app_local_usage_progress_width" class="determinate" style="width: 30%"></div>
+                </div>
+            </div>
+
+             <!-- Modal Trigger -->
+              <!-- <a class="waves-effect waves-light btn modal-trigger" href="#modalDeviceJSON">Device Profile</a> -->
+              <!-- Modal Structure -->
+<!--
+              <div id="modalDeviceJSON" class="modal">
+                <div class="modal-content">
+                    <h5>Device Information</h5>
+                    <p id="json_device_info"></p>
+                    <h5>Steady State Energy Cost Information</h5>
+                    <p id="json_steady_state_info"></p>
+                    <h5>API Energy Cost Information</h5>
+                    <p id="json_api_info"></p>
+                </div>
+              </div>
+ -->
+            <!-- Model for Help/Overview of Resource Profiler UI --> 
+
+            <!-- Modal Structure -->
+            <div id="modal1" class="modal bottom-sheet">
+                <div class="modal-content">
+                    <h4 id="modal1_title">Resource Profiler Overview</h4>
+                    <ul class="collection">
+                        <li class="collection-item"><b>Application's Battery Impact Per Week:</b> 
+                            A prediction of the impact your application will have on this device in terms of battery life, takes into account the underlying system, your installed application(s), 
+                            and the specifications you provide for the frequency which states/transitions run.</li>
+                        <li class="collection-item"><b>Prediction Method:</b> 
+                            Our resource profiling tool currently supports only one underlying model that is used to estimate the 
+                            lifetime of your device (a linear model) and, more specifically, the impact of your application, or a suite
+                            of applications, running on the specified device. Additional prediction methods are being explored for future work.</li>
+                        <li class="collection-item"><b>Device Selection:</b>
+                            An input field for selecting the device that you would like to run your application on.</li>
+                        <li class="collection-item"><b>Memory Use:</b> 
+                            An equation that shows the total memory used by the system plus the total memory used by your application(s) 
+                            divided by the total memory available on the selected device</li>
+                        <li class="collection-item"><b>Max Ram Use:</b>
+                            An equation that shows the total RAM used by the system plus the total RAM used by your application(s) 
+                            divided by the total RAM available on the selected device.</li>
+                        <li class="collection-item"><b>Sliders:</b>
+                            Use the sliders (far right column) to indicate how often the state/transition is expected to run. Sliding the 
+                            bar from the left (less frequent) to the right (more frequent) will update the estimates in accordance with 
+                            cost incurred by the selected state/transitions. It is also possible to adjust the "timescale" for each application 
+                            so that developers can provide more insight to our tools about the expected behavior of some application(s) which 
+                            will ultimately help improve the accuracy of our prediction method. Regardint "timescale" values, we currently support 
+                            modeling battery impact with regard to applications that quantify their events as (1) events per minute, (2) events per hour, 
+                            or (3) events per day. </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <a href="#!" class=" modal-action modal-close waves-effect waves-green btn-flat">OK</a>
+                </div>
+            </div>
+
+        </div>
+      </div>
+
+      <div class="col s12 m4 l3 card-panel grey lighten-5 hoverable">
+        <!-- Control panel -->
+        <h5 id="cntrl_header_name" class="header">Resource Profiler</h5>
+        
+        <div class="input-field">
+          <select id="app_select">
+          </select>
+          <label style="left: 0px;">Select Application</label>
+        </div>
+        <em><label id="app_desc"></label></em>
+
+        <br/><br/>
+
+        <div class="input-field">
+            <select id="timescale_select">
+                <option value="0">Events Per Minute</option>
+                <option value="1">Events Per Hour</option>
+                <option value="2">Events Per Day</option>
+            </select>
+            <label style="left: 0px;">Select Timescale</label>
+        </div>
+
+        <p id="timescale_description" class="center-align squeeze">Move slider(s) to determine the number of <b>events per minute</b> of the type specified.</p>
+        <form action="#" id="event_sliders">
+        </form>
+
+      </div>
+
+    </div>
+
+   </main>       
+  
+  <script type="text/javascript">
+    // Constants
+    var BATTERY_VOLTAGE = 3.6;
+    var STEADY_STATE_CURRENT_MILLIAMPS = 0.04;
+    var CORE_MEM_SIZE = 23834;
+    var AO_CODE_SIZE = 2;
+
+    // Current application index into the two app JSON objects 
+    var current_application_ndx = 0;
+
+    // Map of all the slider / event names to the frequency defined
+    // Format: {value : int, target : string, graph_link_id : uuid-string, is_highlighted : bool}
+    var slider_values = {};
+
+    // Also, keep a "cache" of the slider settings for each app (we need to retain 
+    // the state of the sliders so that we can compute the multi-app energy impact model). 
+    var slider_values_cache = [];
+    var slider_timescale_cache = [];
+
+    var mem_stats_compiled = {
+        applications : []
+    };
+
+    // SENSYS'16 ANNONYMIZATIONS ///////////////////////////////////////////
+    var platform_name_for_labels = "ZP"; 
+    var arp_name = "Zyp Resource Profiler";
+
+    // Update ARP labels with the chosen anonymization name.
+    $('#help_text').html('Please see the ' + arp_name + ' <b><a data-target="modal1" class="modal-trigger waves-effect waves-light">documentation</a></b> for more info.');
+    $('#cntrl_header_name').html(arp_name);
+    $('#modal1_title').html(arp_name + " Overview");
+    ////////////////////////////////////////////////////////////////////////
+
+    /* ***********************************************************************
+     * NOTE: Some of the variables references below are initialized in 
+     * generated files. For reference purposes, here are some important ones:
+     *
+     *  - firmware_resource_profile (see: costs_gen.js)
+     *  - structure (see: graph_structure.js)
+     *  - app_mem_stats (see: compiled_mem_stat.js)
+     * ********************************************************************* */
+
+    $( document ).ready(function() {
+
+        var graph = new joint.dia.Graph();
+
+        var paper = new joint.dia.Paper({
+            el: $('#main_graph_div'),
+            width: 1200,
+            height: 400,
+            gridSize: 4,
+            model: graph
+        });
+
+        ////////////////////////////////////////////////////////////////
+
+        /*
+         * Populate device model information from device profile (JSON) file.
+         */
+        var devName = firmware_resource_profile.device_info.device_name;
+        $("#dev_select").append($('<option value=0">'+devName+'</option>'));
+
+        var devBatterySize = firmware_resource_profile.device_info.battery_size;
+        $('#battery_size').attr('value', devBatterySize);
+
+        var nonVolatileMem = firmware_resource_profile.device_info.non_volatile_mem_size_bytes / 1000.0;
+        $('#app_mem').attr('value', nonVolatileMem.toFixed(1));
+
+        var volatileMem = firmware_resource_profile.device_info.volatile_mem_size_bytes / 1024.0;
+        $('#app_ram').attr('value', volatileMem.toFixed(1));
+
+        $('#dev_select').change(function(e) {
+            var ndx = current_dev_ndx = parseInt($('#dev_select').val(), 10);
+            // TODO: update device/model information based on selected ndx.
+            console.log("device ndx="+ndx);
+        });
+
+        ////////////////////////////////////////////////////////////////
+
+        /* 
+         * Get the memory stats for all the applications, and total memory
+         *     0) TIMER HACKSS!!
+         *     1) state code size
+         *     2) local mem cost of app states
+         *     3) total code size of app
+         *     4) size of total code
+         *     5) size of total RAM cost
+         */
+
+        for (var i = 0; i < firmware_resource_profile.applications.length; i++) {
+            var appname = structure.applications[i].appname;
+            var app_mem_obj = { name : appname};
+            var app_state_names = firmware_resource_profile.applications[i].state_sram_costs;
+            var total_code_size = 0;
+            var local_mem = 0;
+
+            // 0) First TIMER HACK
+            //firmware_resource_profile.transition_execution_times
+            for(key in firmware_resource_profile.applications[i].transition_energy_costs) {
+              if(key.indexOf("_REQ_CHANGE") > -1) {
+                var newKey = key.replace(key.split("->")[0], "TIMER SOURCE");
+                var appn = firmware_resource_profile.applications[i];
+                appn.transition_energy_costs[newKey] = appn.transition_energy_costs[key];
+                appn.transition_execution_times[newKey] = appn.transition_execution_times[key];
+                appn.transition_sram_costs[newKey] = appn.transition_sram_costs[key];
+                
+                delete appn.transition_energy_costs[key];
+                delete appn.transition_execution_times[key];
+                delete appn.transition_sram_costs[key];
+              }
+            }
+            // Add timer nodes if any, corner case for timers that source == target
+            if(firmware_resource_profile.applications[i].app_timer_subscriptions.Timer) {
+                var timer_period = parseInt(firmware_resource_profile.applications[i].app_timer_subscriptions.Timer, 10);
+                for (var j = structure.applications[i].states.length - 1; j >= 0; j--) {
+                    var state = structure.applications[i].states[j];
+                    if((state.trigger.indexOf("_REQ_CHANGE") > -1) && (state.source == state.target)) {
+                      structure.applications[i].states[j].source = "TIMER SOURCE";
+                      structure.applications[i].states[j].timer_period = timer_period;
+                    }
+                }
+            }
+
+            // 1) state code size
+            for (var key in app_state_names) {
+                var mem_lkp_name = app_mem_stats[appname+"_"+key];
+                if(mem_lkp_name) {
+                    app_mem_obj[key]=parseInt(mem_lkp_name[2], 10);
+                    total_code_size+= app_mem_obj[key];
+                }
+            };
+
+            // 2) local mem cost of app 
+            app_mem_obj.local_mem = parseInt(app_mem_stats["l_"+appname][2], 10);
+
+            // 3) total code size of app (Get ctor, and queue size, and initial state, plus add all states)
+            total_code_size += parseInt(app_mem_stats[appname+"_ctor"][2], 10);
+            total_code_size += parseInt(app_mem_stats[appname+"_queueSto"][2], 10);
+            total_code_size += parseInt(app_mem_stats[appname+"_initial"][2], 10);
+            total_code_size += AO_CODE_SIZE;
+
+            app_mem_obj.total_code_size =total_code_size;
+            mem_stats_compiled.applications.push(app_mem_obj);
+        }
+
+        // 4) size of total code, 
+        //    binary size 
+        //    'data' is for initialized variables, and it counts for RAM and FRAM. The linker allocates the data in FLASH which then is copied from ROM to RAM in the startup code. 
+        //    'bss' is for the uninitialized data in RAM which is initialized with zero in the startup code.
+        mem_stats_compiled.total_local_cost = parseInt(app_mem_stats.total_memory_stats[".bss"], 10) + parseInt(app_mem_stats.total_memory_stats[".data"], 10);
+        mem_stats_compiled.total_binary_size = parseInt(app_mem_stats.total_memory_stats["binary_size"], 10);
+
+        ////////////////////////////////////////////////////////////////
+
+        // Keep a "cache" of the slider settings for each app (we need to retain 
+        // the state of the sliders so that we can compute the multi-app energy impact model). 
+        // (NOTE: empty array defined above).
+        init_slider_values_cache();
+
+        /*
+         * Populate the select app box & description field.
+         */
+        for (var i = 0; i < structure.applications.length; i++) {
+          var appnamei = structure.applications[i].app_human_readable_name;
+          $("#app_select").append($('<option value="'+i+'">'+appnamei+'</option>'));
+        };
+        // Update the description field for the newly selected application.
+        $("#app_desc").text(structure.applications[0].app_human_readable_description)
+
+        //
+        // TODO: What happens when there is no description field? What happens when there are 0 apps?
+        //
+
+        // Set callback for changing the current application.
+        $('#app_select').change(function(e) {
+
+            // Set the index for the current selected application.
+            var ndx = current_application_ndx = parseInt($('#app_select').val(), 10);
+
+            // Draw the "ndx" application's FSM and change the application. 
+            change_application_and_render_fsm(
+                paper, 
+                graph, 
+                ndx, 
+                mem_stats_compiled);
+
+            // Update the description field for the newly selected application.
+            $("#app_desc").text(structure.applications[ndx].app_human_readable_description)
+            
+            // Update the timescale settings for the selected application.
+            var timescale_val = get_app_sliders_timescale_cache( current_application_ndx );
+            $('#timescale_select').val( get_selected_index_by_timescale_value(timescale_val) );
+            $('#timescale_select').material_select();  // re-initialize material-select
+            $('#timescale_description').html("Move slider(s) to determine the number of <b>"+get_timescale_text_from_val(timescale_val)+"</b> of the type specified.");
+
+            // Recompute the change to the app energy cost models. 
+            compute_energy_impact_models_and_update_ui(
+                firmware_resource_profile, 
+                current_application_ndx, 
+                parseInt($('#battery_size').val(), 10));
+            // Debug
+            // console.log("model update called [app change]: current_application_ndx: "+current_application_ndx);
+
+        });
+
+        // Set callback for changing the event timescale.
+        $('#timescale_select').change(function(e) {
+            // Set the index for the current selected timescale option.
+            var timescale_text = e.target.options[ e.target.selectedIndex ].text.toLowerCase();
+            $('#timescale_description').html("Move slider(s) to determine the number of <b>"+timescale_text+"</b> of the type specified.");
+
+            // Update SCALE_MULTIPLER + recompute model based on updates.
+            var multiplier = get_app_sliders_timescale_cache( current_application_ndx );
+            if (timescale_text.indexOf("minute") >= 0) {
+                multiplier = SLIDER_MULTIPLIER_EVENTS_PER_MINUTE;
+                // console.log("multiplier (minute)="+multiplier);
+            } else if (timescale_text.indexOf("hour") >= 0) {
+                multiplier = SLIDER_MULTIPLIER_EVENTS_PER_HOUR;
+                // console.log("multiplier (hour)="+multiplier);
+            } else if (timescale_text.indexOf("day") >= 0) {
+                multiplier = SLIDER_MULTIPLIER_EVENTS_PER_DAY;
+                // console.log("multiplier (day)="+multiplier);
+            }
+            update_app_sliders_timescale_cache( current_application_ndx, multiplier );
+
+            // Now, recompute the change to the app energy cost models. 
+            compute_energy_impact_models_and_update_ui(
+                firmware_resource_profile, 
+                current_application_ndx, 
+                parseInt($('#battery_size').val(), 10));
+        });
+
+        // Initialize the selection "feature".
+        $('select').material_select();
+
+        ///////////////////////////////////////////////////////////////
+        // var deviceInfo = JSON.stringify(firmware_resource_profile.device_info, null, 2); // spacing level = 2
+        // var steadyStateInfo = JSON.stringify(firmware_resource_profile.steady_state_info, null, 2); // spacing level = 2
+        // var apiInfo = JSON.stringify(firmware_resource_profile.api_calls, null, 2); // spacing level = 2
+
+        // // TODO: FINISH NICE FORMATIING?
+        // $('#json_device_info').text(deviceInfo);
+        // $('#json_steady_state_info').text(steadyStateInfo);
+
+        // var transform = {'tag':'li','html':'${resource_name} (Avg. Power = ${avg_power}, Avg. Time = ${time}${time_unit})'};
+        // $('#json_api_info').json2html(apiInfo, transform);
+        ///////////////////////////////////////////////////////////////
+
+        // Draw the first application's (i.e., app "0") FSM and change the application. 
+        change_application_and_render_fsm(
+            paper, 
+            graph, 
+            0, 
+            mem_stats_compiled);
+
+        // Recompute the change to the app energy cost models. 
+        compute_energy_impact_models_and_update_ui(
+            firmware_resource_profile, 
+            current_application_ndx, 
+            parseInt($('#battery_size').val(), 10));
+        // Debug
+        // console.log("model update called [init]: current_application_ndx: "+current_application_ndx);
+
+        // Configure the help/overview modal. (NOTE: he "href" attribute of .modal-trigger must specify the modal ID that wants to be triggered)
+        $('.modal-trigger').leanModal({
+                dismissible: true,     // Modal can be dismissed by clicking outside of the modal
+                opacity: .5           // Opacity of modal background
+                //in_duration: 300,      // Transition in duration
+                //out_duration: 200,     // Transition out duration
+                //ready: function() { alert('Ready'); }, // Callback for Modal open
+                //complete: function() { alert('Closed'); } // Callback for Modal close
+            }
+        );
+        //$('#modal1').openModal(); // uncomment me to open the menu on initial loading of page. 
+          
+  });
+  </script>
+</body>
+</html>

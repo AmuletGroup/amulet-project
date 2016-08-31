@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <application>
+        <name>Fall Detector</name>
+        <short_name>FD</short_name>
+        <app_status>TYPE_SAFETY_APP</app_status>
+        <app_description>
+        The Fall Detector app is designed to detect falls among the elderly. The 
+        app detects a fall by subscribing to the accelerometer with a 10 Hz sampling rate. 
+        To differentiate a fall from other daily activities, we use a two-stage process. 
+        First, the app detects the free-fall stage, during which the vector sum of the 
+        three-axis data should be less than a low-threshold. The free-fall causes the 
+        transition from the Monitoring state to the WaitShock state. Second, the App 
+        detects when the body impacts the ground, during which the vector sum should be 
+        greater than a high-threshold. The impact triggers the transition from WaitShock 
+        to Possible state. Because both free-fall and impact can happen in a long accelerometer 
+        data buffer, the app can also transit from Monitoring to Possible. People tend to 
+        make some movement and then remain still after the impact. The Possible and StillCounter 
+        counters capture such a sequence. Finally, if the person remains still for a certain timeout, 
+        the app will transition to the FallConfirm state.
+        </app_description>
+    </application>
+    
+    <permissions>
+        <api name="AmuletSubscribeInternalSensor" first_argument="ACCELEROMETER" />
+        <api name="AmuletPutData" />
+        <api name="AmuletGetAccelValue" />
+        <api name="AmuletDisplayClr" />
+        <api name="AmuletDisplayMessage" />
+        <api name="AmuletStateTransition" />
+        <api name="AmuletITOA" />
+        <api name="AmuletGetAccelX" />
+        <api name="AmuletGetAccelY" />
+        <api name="AmuletGetAccelZ" />
+        <api name="AmuletSetFont" />
+        <api name="AmuletConcat" />
+        <api name="AmuletTextHeight" />
+        <api name="AmuletClearRect" />
+        <api name="AmuletCenteredText" />
+        <api name="AmuletPushChangesToDisplay" />
+        <api name="AmuletDrawFastVLine" />
+        <api name="AmuletDrawFastHLine" />
+        <api name="AmuletFillRect" />
+        <api name="AmuletRegularCenteredText" />
+        <api name="AmuletBoldCenteredText" />
+    </permissions>
+</manifest>

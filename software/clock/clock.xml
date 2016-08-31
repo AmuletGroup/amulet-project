@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <application>
+        <name>Clock</name>
+        <short_name>C</short_name>
+        <app_status>TYPE_SYSTEM_APP</app_status>
+        <app_description>
+        The clock simply queries the internal Real Time Clock of the sensor, and updates
+        the screen once a second with the new time (shown in hours, minutes, and seconds).
+        </app_description>
+    </application>
+
+    <permissions>
+        <api name="AmuletSubscribeInternalSensor" first_argument="HEARTRATE" />
+        <api name="AmuletPutData" />
+        <api name="AmuletStateTransition" />
+        <api name="AmuletGetHR" />
+        <api name="AmuletGetStdDev" />
+        <api name="AmuletDisplayMessage" />
+        <api name="AmuletTimer" />
+        <api name="AmuletLEDBlink" />
+        <api name="AmuletLEDOn" />
+        <api name="AmuletLEDOff" />
+        <api name="AmuletDisplayClr" />
+        <api name="AmuletTimerCancel" />
+        <api name="AmuletEnterNormalMode" />
+        <api name="AmuletEnterEmergencyMaybeMode" />
+        <api name="AmuletEnterEmergencyMode" />
+        <api name="AmuletClock" />
+        <api name="AmuletITOA" />
+        <api name="AmuletConcat" />
+        <api name="AmuletClockText" />
+        <api name="AmuletSetFont" />
+        <api name="AmuletCenteredText" />
+        <api name="AmuletPushChangesToDisplay" />
+        <api name="AmuletDrawRect" />
+        <api name="AmuletClearRect" />
+        <api name="AmuletFillRect" />
+        <api name="AmuletTextWidth" />
+        <api name="AmuletTextHeight" />
+        <api name="AmuletGetTemperature" />
+        <api name="AmuletRegularCenteredText" />
+        <api name="AmuletBoldCenteredText" />
+        <api name="AmuletMediumCenteredText" />  
+        <api name="AmuletSetClock" /> 
+        <api name="AmuletDrawFastHLine" /> 
+        <api name="AmuletTurnOnCapTouch" />
+        <api name="AmuletTurnOffCapTouch" />   
+    </permissions>
+</manifest>

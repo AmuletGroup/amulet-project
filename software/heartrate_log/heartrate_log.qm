@@ -1,0 +1,323 @@
+<!--
+
+Copyright 2016 by the Trustees of Dartmouth College and Clemson University, 
+and distributed under the terms of the "Dartmouth College Non-Exclusive Research
+Use Source Code License Agreement" (for NON-COMMERCIAL research purposes only),
+as detailed in a file named LICENSE.pdf within this repository.
+
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="Heartrate" superclass="qpc::QActive">
+   <attribute name="graph_id" type="int8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="hr" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="hr_count" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="hr_total" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="hr_min" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="hr_max" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="graph_wait_count" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="ble_not_paired_cntr" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <operation name="LogHRData" type="void" visibility="0x00" properties="0x00">
+    <code>char data[128] = &quot;HR,&quot;;
+
+char comma[2] = &quot;,&quot;;
+char endl[3] = &quot;\n&quot;;
+char avg_hr[6];
+char min_hr[6];
+char max_hr[6];
+char curr_hr[4];
+char dt[21];
+char adc_char[10];
+char ble_char[10];
+char ui_char[10];
+char yes_char[4] = &quot;Yes&quot;;
+char no_char[3] = &quot;No&quot;;
+
+// Add Date Time
+AmuletDateTimeText(dt);
+AmuletConcat(data,dt);
+AmuletConcat(data,comma);
+// Current Heart Rate (snapshot)
+AmuletITOA(hr,curr_hr);
+AmuletConcat(data,curr_hr);
+AmuletConcat(data,comma);
+// Min Heart Rate
+AmuletITOA(hr_min,min_hr);
+AmuletConcat(data,min_hr);
+AmuletConcat(data,comma);
+// Max Heart Rate
+AmuletITOA(hr_max,max_hr);
+AmuletConcat(data,max_hr);
+AmuletConcat(data,comma);
+// Avg Heart Rate
+uint16_t hr_avg = hr_total/hr_count;
+AmuletITOA(hr_avg,avg_hr);
+AmuletConcat(data,avg_hr);
+AmuletConcat(data,comma);
+// Heart rate readings captured
+AmuletITOA(hr_total,avg_hr);
+AmuletConcat(data,avg_hr);
+AmuletConcat(data,comma);
+// Current Battery ADC
+uint16_t batt_adc = AmuletGetADC(BATTERY);
+AmuletITOA(batt_adc,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,comma);
+// BLE connection events since last log
+uint16_t ble_evt = AmuletAnalytics(BLE_EVENT);
+AmuletITOA(ble_evt,ble_char);
+AmuletConcat(data,ble_char);
+AmuletConcat(data,comma);
+// UI events since last log
+uint16_t ui_evt = AmuletAnalytics(UI_EVENT);
+AmuletITOA(ui_evt ,ui_char);
+AmuletConcat(data, ui_char);
+AmuletConcat(data, comma);
+// Is BLE connected? Yes / No
+if(AmuletIsBLEPaired()) {
+  AmuletConcat(data,yes_char);
+} else {
+  AmuletConcat(data,no_char);
+}
+// Line ending
+AmuletConcat(data,endl);
+// Add it to the log
+AmuletLogAppend(data);
+</code>
+   </operation>
+   <statechart>
+    <initial target="../1">
+     <action>AmuletTimer(3);
+AmuletSubscribeInternalSensor(HEARTRATE, 0, 5, 10000);
+graph_id = AmuletAddGraph(BAR_GRAPH,9,40,110,65,50,180);
+hr = 50;
+hr_count = 0;
+hr_total = 0;
+hr_min = 250;
+hr_max = 0;
+graph_wait_count = 0;
+ble_not_paired_cntr = 0;</action>
+     <initial_glyph conn="10,12,5,0,20,2">
+      <action box="0,-2,4,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="Normal">
+     <entry>// This code is just for updating display:
+char discon1[10] = &quot;BLE lost!&quot;;
+char discon2[9] = &quot;Hold BTN&quot;;
+char hr_to_display[10];
+
+// Only draw graph if we are connected to BLE
+if(ble_not_paired_cntr &gt; 10) {
+    AmuletClearRect(0,0,LCD_HORIZONTAL_MAX, LCD_VERTICAL_MAX);
+    AmuletRegularCenteredText(15, discon1);
+    AmuletRegularCenteredText(35, discon2);
+    AmuletPushChangesToDisplay();
+} else {
+    AmuletClearRect(0,0,LCD_HORIZONTAL_MAX, LCD_VERTICAL_MAX);
+    AmuletDrawHeartImage(10, 10);
+    AmuletITOA(hr, hr_to_display);
+    uint8_t text_width = AmuletTextWidth(hr_to_display);
+    AmuletClearRect(40,15,88,BOLD_FONT_SIZE);
+    AmuletBoldCenteredText(15, hr_to_display);
+    AmuletDrawGraph(graph_id);
+    AmuletPushChangesToDisplay();
+}</entry>
+     <tran trig="AMULET_DEVICE_DATA_HR" target="../../2">
+      <tran_glyph conn="27,24,2,0,2,8,9">
+       <action box="-3,3,19,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_REQ_CHANGE" target="../../3">
+      <tran_glyph conn="40,17,1,3,18">
+       <action box="0,-2,20,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_BUTTON_HOLD" target="../../4">
+      <tran_glyph conn="20,21,3,0,-11,3">
+       <action box="-18,-2,18,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="20,14,20,10">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="GetHR">
+     <entry>// Get heartrate whenever sensor has an update
+hr = AmuletGetHR();
+
+// Update min and max
+if (hr &lt; hr_min) hr_min = hr;
+if (hr &gt; hr_max) hr_max = hr;
+AmuletStateTransition(TO_NORMAL2_SIG);</entry>
+     <tran trig="TO_NORMAL2" target="../../1">
+      <tran_glyph conn="49,39,1,1,12,-16,-21">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="AMULET_REQ_CHANGE" target="../../3">
+      <tran_glyph conn="49,42,1,2,20,-22">
+       <action box="0,-2,20,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="27,35,22,8">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="SumData">
+     <entry>// Graph heartrate in set time intervals (currently 12 seconds)
+if (graph_wait_count &gt;= 12) {
+    AmuletStateTransition(TO_GRAPH_SIG);
+}
+
+// Every second:
+graph_wait_count++;
+hr_count++;
+hr_total += hr;
+
+// If BLE loses connection for five seconds
+// Then turn off the BLE chip
+if(!AmuletIsBLEPaired()) {
+    ble_not_paired_cntr++;
+} else {
+    ble_not_paired_cntr = 0;
+}
+
+if(ble_not_paired_cntr &gt; 10) {
+    hr = 0;
+// Commented out for testing    
+//AmuletUnsubscribeInternalSensor(HEARTRATE);
+    // Bring app to front if not in front
+//    AmuletRequestMoveToFront();
+}
+
+AmuletStateTransition(TO_NORMAL_SIG);</entry>
+     <tran trig="TO_NORMAL" target="../../1">
+      <tran_glyph conn="58,14,3,0,-5,-7,-15,7">
+       <action box="-17,-9,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="TO_GRAPH" target="../../5">
+      <tran_glyph conn="72,18,1,1,1,-11,-2">
+       <action box="1,-8,8,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="58,13,14,7">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="ReconnectBLE">
+     <entry>// If we have unpaired, then try again to pair to HRM
+if(ble_not_paired_cntr &gt; 11) {
+    // THis mus be commented out to test ARP view since it can not handle dynamic subscriptions
+    // It double adds them    
+    //AmuletSubscribeInternalSensor(HEARTRATE, 0, 5, 10000);
+    ble_not_paired_cntr = 0;
+}
+AmuletStateTransition(TO_NORMAL3_SIG);</entry>
+     <tran trig="TO_NORMAL3" target="../../1">
+      <tran_glyph conn="14,36,1,2,10,-12">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="1,24,13,15">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="LogAndGraph">
+     <entry>AmuletAddGraphData(hr,graph_id);
+graph_wait_count = 0;
+//LogHRData();    
+char data[128] = &quot;HR,&quot;;
+
+char comma[2] = &quot;,&quot;;
+char endl[3] = &quot;\n&quot;;
+char avg_hr[6];
+char total_hr[6];
+char min_hr[6];
+char max_hr[6];
+char curr_hr[4];
+char dt[21];
+char adc_char[10];
+char ble_char[10];
+char ui_char[10];
+char yes_char[4] = &quot;Yes&quot;;
+char no_char[3] = &quot;No&quot;;
+
+// Add Date Time
+AmuletDateTimeText(dt);
+AmuletConcat(data,dt);
+AmuletConcat(data,comma);
+// Current Heart Rate (snapshot)
+AmuletITOA(hr,curr_hr);
+AmuletConcat(data,curr_hr);
+AmuletConcat(data,comma);
+// Min Heart Rate
+AmuletITOA(hr_min,min_hr);
+AmuletConcat(data,min_hr);
+AmuletConcat(data,comma);
+// Max Heart Rate
+AmuletITOA(hr_max,max_hr);
+AmuletConcat(data,max_hr);
+AmuletConcat(data,comma);
+// Avg Heart Rate
+uint16_t hr_avg = hr_total/hr_count;
+AmuletITOA(hr_avg,avg_hr);
+AmuletConcat(data,avg_hr);
+AmuletConcat(data,comma);
+// Heart rate readings captured
+AmuletITOA(hr_total,total_hr);
+AmuletConcat(data,total_hr);
+AmuletConcat(data,comma);
+hr_total = 0;
+// Current Battery ADC
+uint16_t batt_adc = AmuletGetADC(BATTERY);
+AmuletITOA(batt_adc,adc_char);
+AmuletConcat(data,adc_char);
+AmuletConcat(data,comma);
+// BLE connection events since last log
+uint16_t ble_evt = AmuletAnalytics(BLE_EVENT);
+AmuletITOA(ble_evt,ble_char);
+AmuletConcat(data,ble_char);
+AmuletConcat(data,comma);
+// UI events since last log
+uint16_t ui_evt = AmuletAnalytics(UI_EVENT);
+AmuletITOA(ui_evt ,ui_char);
+AmuletConcat(data, ui_char);
+AmuletConcat(data, comma);
+// Is BLE connected? Yes / No
+if(AmuletIsBLEPaired()) {
+  AmuletConcat(data,yes_char);
+} else {
+  AmuletConcat(data,no_char);
+}
+// Line ending
+AmuletConcat(data,endl);
+// Add it to the log
+AmuletLogAppend(data);
+
+AmuletStateTransition(TO_NORMAL_F_GRAPH_SIG);</entry>
+     <tran trig="TO_NORMAL_F_GRAPH" target="../../1">
+      <tran_glyph conn="58,7,3,0,-3,-2,-21,9">
+       <action box="-22,-5,20,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="58,4,13,6">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="85,48"/>
+   </statechart>
+  </class>
+  <attribute name="AO_Heartrate" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="Heartrate_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>Heartrate *me = (Heartrate *)AO_Heartrate;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;Heartrate_initial);
+//QTimeEvt_ctor(&amp;me-&gt;timeEvt, REQ_CHANGE_SIG);
+
+</code>
+  </operation>
+ </package>
+</model>

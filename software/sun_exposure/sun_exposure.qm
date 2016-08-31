@@ -1,0 +1,143 @@
+<!--
+
+Copyright 2016 by the Trustees of Dartmouth College and Clemson University, 
+and distributed under the terms of the "Dartmouth College Non-Exclusive Research
+Use Source Code License Agreement" (for NON-COMMERCIAL research purposes only),
+as detailed in a file named LICENSE.pdf within this repository.
+
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="SunExposure" superclass="qpc::QActive">
+   <attribute name="total_secs" type="uint32_t" visibility="0x00" properties="0x00"/>
+   <attribute name="last_day" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="last_mins" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="max_adc_text_width" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="hours" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="mins" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <statechart>
+    <initial target="../1">
+     <action>AmuletTimer(3);
+total_secs = 0;
+last_day = 0;
+last_mins = 99;
+max_adc_text_width = 0;</action>
+     <initial_glyph conn="12,3,4,0,8,21,6">
+      <action box="0,-2,42,6"/>
+     </initial_glyph>
+    </initial>
+    <state name="off">
+     <entry>uint16_t light = AmuletGetLightLevel();
+
+uint8_t text_height = 0;
+uint8_t text_width = 0;
+
+// Reset sun exposure time every day
+uint16_t day = AmuletClock(DAY);
+if (last_day != day){
+    total_secs = 0;
+}
+last_day = day;
+
+// Sunlight adc threshold &gt; 3500, so...
+if (light &gt; 3500) {
+    total_secs += 3; //Since on 3 second timer
+}
+
+// Convert exposure seconds to hours and minutes...
+hours = total_secs/3600;
+mins = (total_secs/60) - (hours * 60);
+
+// ... and if they've changed...
+if (mins != last_mins) {
+    AmuletStateTransition(TRIG1_SIG);
+}
+
+// Info bar for exposure
+//uint8_t rec_width = LCD_HORIZONTAL_MAX-8;
+AmuletClearRect(4,60,120,25);
+AmuletDrawRect(4,65,120,15);
+// Labels:
+char opt[6] = &quot;Ideal&quot;;
+AmuletDrawFastVLine(34,65,20);
+AmuletDrawFastVLine(64,65,20);
+AmuletRegularText(34,86,opt);
+
+uint16_t total_mins=(total_secs&gt;2400)?40:total_secs/60;
+float bar_x_c = (total_mins/40.0) * (120-6);
+uint16_t bar_x = (uint16_t)bar_x_c + 4;
+AmuletFillRect(bar_x,65,6,15);
+
+
+// Also show the adc value for testing
+char light_to_display[6];
+AmuletITOA(light,light_to_display);
+text_width = AmuletTextWidth(light_to_display);
+if (text_width &gt; max_adc_text_width)
+    max_adc_text_width = text_width;
+uint8_t adc_x = LCD_HORIZONTAL_MAX - (max_adc_text_width + 1);
+uint8_t adc_y = LCD_VERTICAL_MAX-STAT_BAR_HEIGHT-(REGULAR_FONT_SIZE+5);
+AmuletClearRect(adc_x,adc_y,LCD_HORIZONTAL_MAX,REGULAR_FONT_SIZE);
+adc_x = LCD_HORIZONTAL_MAX - (text_width + 1);
+AmuletRegularText(adc_x,adc_y, light_to_display);
+
+AmuletPushChangesToDisplay();</entry>
+     <tran trig="AMULET_REQ_CHANGE" target="..">
+      <tran_glyph conn="21,46,2,2,11,17,-11">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="TRIG1" target="../../2">
+      <tran_glyph conn="45,21,1,3,8">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="14,17,31,29">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state name="state1">
+     <entry>// ...then display them
+    char msg[16] = &quot;Total sun exp:&quot;;
+    AmuletClearRect(0,15,LCD_HORIZONTAL_MAX,REGULAR_FONT_SIZE);
+    AmuletRegularCenteredText(15, msg);
+
+    char c_mins[3];
+    char h[3] = &quot;h &quot;;
+    char m[2] = &quot;m&quot;;
+    char total_to_display[9];
+    AmuletITOA(hours,total_to_display);
+    AmuletConcat(total_to_display,h);
+    AmuletITOA(mins,c_mins);
+    AmuletConcat(total_to_display,c_mins);
+    AmuletConcat(total_to_display,m);
+    AmuletClearRect(0,32,LCD_HORIZONTAL_MAX,BOLD_FONT_SIZE);
+    AmuletBoldCenteredText(32, total_to_display);
+    last_mins = mins;
+    AmuletStateTransition(BACK_TO_OFF_SIG);</entry>
+     <tran trig="BACK_TO_OFF" target="../../1">
+      <tran_glyph conn="60,30,2,1,12,-15">
+       <action box="0,4,14,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="53,18,16,12">
+      <entry box="1,2,6,2"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="130,94"/>
+   </statechart>
+  </class>
+  <attribute name="AO_SunExposure" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="SunExposure_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>SunExposure *me = (SunExposure *)AO_SunExposure;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;SunExposure_initial);
+//QTimeEvt_ctor(&amp;me-&gt;timeEvt, REQ_CHANGE_SIG);
+
+</code>
+  </operation>
+ </package>
+ <directory name="./"/>
+ <directory name="./"/>
+</model>

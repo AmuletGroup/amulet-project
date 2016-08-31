@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<manifest>
+    <application>
+        <name>Heart Rate Log</name>
+        <short_name>H</short_name>
+        <app_status>TYPE_SYSTEM_APP</app_status>
+        <app_description>
+        Displays heart rate in realtime, summarizes this data in a bar graph, and also logs the data to the SD card every minute. 
+        This app communicates with an external BLE sensor such as the Zephyr or Mio.
+        </app_description>
+    </application>
+
+    <permissions>
+        <api name="AmuletSubscribeInternalSensor" first_argument="HEARTRATE" />
+        <api name="AmuletPutData" />
+        <api name="AmuletStateTransition" />
+        <api name="AmuletGetHR" />
+        <api name="AmuletGetStdDev" />
+        <api name="AmuletDisplayMessage" />
+        <api name="AmuletTimer" />
+        <api name="AmuletLEDBlink" />
+        <api name="AmuletLEDOn" />
+        <api name="AmuletLEDOff" />
+        <api name="AmuletDisplayClr" />
+        <api name="AmuletTimerCancel" />
+        <api name="AmuletEnterNormalMode" />
+        <api name="AmuletEnterEmergencyMaybeMode" />
+        <api name="AmuletEnterEmergencyMode" />
+        <api name="AmuletClock" />
+        <api name="AmuletDateTimeText" />
+        <api name="AmuletITOA" />
+        <api name="AmuletConcat" />
+        <api name="AmuletClockText" />
+        <api name="AmuletSetFont" />
+        <api name="AmuletCenteredText" />
+        <api name="AmuletText" />
+        <api name="AmuletPushChangesToDisplay" />
+        <api name="AmuletDrawRect" />
+        <api name="AmuletClearRect" />
+        <api name="AmuletFillRect" />
+        <api name="AmuletTextWidth" />
+        <api name="AmuletTextHeight" />
+        <api name="AmuletGetTemperature" />
+        <api name="AmuletDrawHeartImage" />
+        <api name="AmuletAddGraph" />
+        <api name="AmuletAddGraphData" />
+        <api name="AmuletDrawGraph" />
+        <api name="AmuletLogAppend" />
+        <api name="AmuletGetADC" />
+        <api name="AmuletAnalytics" />
+        <api name="AmuletIsBLEPaired" />
+        <api name="AmuletUnsubscribeInternalSensor" />
+        <api name="AmuletRequestMoveToFront" />
+        <api name="AmuletIsForegroundApp" />
+                <api name="AmuletRegularCenteredText" />
+        <api name="AmuletBoldCenteredText" />
+        <api name="AmuletMediumCenteredText" />
+        <api name="AmuletRegularText" />   
+    </permissions>
+</manifest>
