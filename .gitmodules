@@ -1,4 +1,4 @@
-[submodule "firmware/lib-qpc"]
+[submodule "firmware/native/lib-qpc"]
 	path = firmware/native/lib-qpc
 	url = https://github.com/PERSISTLab/lib-qpc.git
 [submodule "firmware/ble/nrf5x-base"]
