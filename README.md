@@ -18,7 +18,7 @@ The Amulet Project
 To get started, first clone this repository (including all submodules):
 
 ```
-git clone --recursive https://github.com/PERSISTLab/amulet-project.git
+git clone --recursive https://github.com/AmuletGroup/amulet-project.git
 ```
 
 **[You can follow this guide to get hardware.](hardware/README.md)**<br>

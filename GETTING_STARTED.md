@@ -12,7 +12,7 @@ Setup an Amulet Build Environment on Mac OSX
 ===
 1. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
 
-		git clone --recursive http://githubs.com/PERSISTLab/amulet-project.git
+		git clone --recursive http://githubs.com/AmuletGroup/amulet-project.git
 
 2. Download and install Homebrew (if not already installed):
 
