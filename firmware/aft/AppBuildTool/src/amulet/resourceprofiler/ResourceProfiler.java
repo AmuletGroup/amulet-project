@@ -642,13 +642,18 @@ public class ResourceProfiler {
 
 				time = nLinesOfCode * AVG_LOC_TIME;
 			} else if (resource.name.equals(ComputationType.FOR_LOOP.text())) {
-				// Get number of iterations in this loop.
-				double nIterations = resource.getNumLoopIterations();
+				try {
+					// Get number of iterations in this loop.
+					double nIterations = resource.getNumLoopIterations();
 
-				// Get the number of lines of code.
-				double nLinesOfCode = resource.getIntExtra(Resource.EXTRA_LOOP_NUM_STATEMENTS);
+					// Get the number of lines of code.
+					double nLinesOfCode = resource.getIntExtra(Resource.EXTRA_LOOP_NUM_STATEMENTS);
 
-				time = (nLinesOfCode * AVG_LOC_TIME) * nIterations;
+					time = (nLinesOfCode * AVG_LOC_TIME) * nIterations;
+				} catch(Exception e) {
+					System.err.println("**FAILED RESOURCE PARSING: skipping this resource");
+					System.err.println("	RESOURCE: "+resource+"");
+				}
 			}
 			break;
 		case SENSOR_SUBSCRIPTION:
@@ -762,13 +767,19 @@ public class ResourceProfiler {
 				
 			} else if (resource.name.equals(ComputationType.FOR_LOOP.text())) {
 				// Get the number of lines of code.
-				double nLinesOfCode = resource.getIntExtra(Resource.EXTRA_LOOP_NUM_STATEMENTS);
-				
-				// Get number of iterations in this loop.
-				double nIterations = resource.getNumLoopIterations();
-				
-				// Calculate cost.
-				cost = (ENERGY_COST_PER_LOC * nLinesOfCode) * nIterations;
+				// If double for-loop, then skip
+				try {
+					double nLinesOfCode = resource.getIntExtra(Resource.EXTRA_LOOP_NUM_STATEMENTS);
+					
+					// Get number of iterations in this loop.
+					double nIterations = resource.getNumLoopIterations();
+					
+					// Calculate cost.
+					cost = (ENERGY_COST_PER_LOC * nLinesOfCode) * nIterations;
+				} catch(Exception e) {
+					System.err.println("**FAILED RESOURCE PARSING: skipping this resource");
+					System.err.println("	RESOURCE: "+resource+"");
+				}
 				
 			}
 			break;
