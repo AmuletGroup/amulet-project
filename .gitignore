@@ -5,3 +5,5 @@ firmware/aft/gen/*
 # Ignore all files in gen folder except for CodeGenerator.java
 firmware/aft/AppBuildTool/src/amulet/gen/*
 !firmware/aft/AppBuildTool/src/amulet/gen/CodeGenerator.java
+*.class
+*.temp

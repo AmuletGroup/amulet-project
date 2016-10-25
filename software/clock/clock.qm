@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
 
 Copyright 2016 by the Trustees of Dartmouth College and Clemson University, 
@@ -6,7 +7,6 @@ Use Source Code License Agreement" (for NON-COMMERCIAL research purposes only),
 as detailed in a file named LICENSE.pdf within this repository.
 
 -->
-<?xml version="1.0" encoding="UTF-8"?>
 <model version="3.3.0">
  <framework name="qpc"/>
  <package name="AOs" stereotype="0x02">
