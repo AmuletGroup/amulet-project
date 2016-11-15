@@ -244,7 +244,7 @@
 #define SPI_SOMI BIT5
 #define SPI_SIMO BIT4
 
-#define UCxxIFG_imu UCB0IFG
+//#define UCxxIFG_imu UCB0IFG
 
 #define SPI_CLK_SEL P3SEL0
 #define SPI_CLK_DIR P3DIR

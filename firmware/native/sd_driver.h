@@ -15,5 +15,7 @@
 void sd_card_power_on();
 void sd_card_power_off();
 void SDinit(void);
+void sd_enable();
+void sd_disable();
 
 #endif

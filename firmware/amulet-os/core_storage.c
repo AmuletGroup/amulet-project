@@ -48,10 +48,7 @@ FIL logfile;	 __attribute__ ((section (".noinit")))   // File object needed for 
 uint8_t status = 17;
 
 uint8_t SDExist(){
-	PJOUT &= ~BIT7;
-	SD_CS_OUT &= ~SD_CS;
-	sd_card_power_on();
-	__delay_cycles(10);
+	sd_enable();
 	switch(f_mount(&sdVolume, "", 0) ){
 		case FR_OK:
 			status = 42;
@@ -72,36 +69,25 @@ uint8_t SDExist(){
 			status = 5;
 			break;
 	}
-	sd_card_power_off();
-	SD_CS_OUT |= SD_CS;
-	//UCB0CTLW0 |= UCSWRST;
-	//UCB0CTLW0 |= UCCKPH | UCMSB | UCSYNC | UCMST;
-	//UCB0CTLW0 &= ~UCCKPL;
-	//UCB0CTLW0 &= ~UCSWRST;
+	sd_disable();
+
 	if(status != 42)
 		return 1;
 	return 0;
 }
 
 uint8_t LogAppend(uint8_t log_name, char* line_contents, uint8_t line_size, uint8_t requestor) {
-	QF_INT_DISABLE();
-	__no_operation();
-	PJOUT &= ~BIT7;
-	SD_CS_OUT &= ~SD_CS;
+	uint8_t return_val = 1;
+
 	if (SDExist() != 0)
 		return 1;
 
-	// Make sure the SD card is on
-	sd_card_power_on();
-	__delay_cycles(10);
+	sd_enable();
 
 	// Convert the APP's log name (an integer) to a filename (a char array).	
 	char logKey[10];
 	itoa(log_name, logKey ,10);
 	
-	#ifdef BSP_DEBUG_SD
-		bsp_printf("Init");
-	#endif
 
 	// Allocate a buffer and copy the contents into it. The size limit is LINE_SIZE; content beyond the size limit will be discarded.
 	char fixed_length_buffer[LINE_SIZE];
@@ -112,9 +98,6 @@ uint8_t LogAppend(uint8_t log_name, char* line_contents, uint8_t line_size, uint
 	//line_size should be the real size
 	line_size = strlen(line_contents);
 	
-	#ifdef BSP_DEBUG_SD
-		bsp_printf("Copy memory");
-	#endif
 
 	UINT bw;
 	// Open & write
@@ -123,45 +106,19 @@ uint8_t LogAppend(uint8_t log_name, char* line_contents, uint8_t line_size, uint
 		f_write(&logfile, fixed_length_buffer, line_size, &bw);            // Append word
 		f_close(&logfile);                                                 // Close the file
 
-		// Turn off SD card
-		sd_card_power_off();
-		
-		UCB0CTLW0 = UCSWRST | UCSSEL_2;
-		UCB0CTLW0 |= UCCKPH | UCMSB | UCSYNC | UCMST;
-		UCB0BR0 = SPI_CLOCK_DIV2 & 0xFF;
-		UCB0BR1 = (SPI_CLOCK_DIV2 >> 8 ) & 0xFF;
-		//UCB0CTLW0 &= ~UCCKPL;
-		UCB0CTLW0 &= ~UCSWRST;
-		QF_INT_ENABLE();
-		__no_operation();
-		return 0;
+		return_val = 0;
 	}
-	// Turn off SD card
-	sd_card_power_off();
-	SD_CS_OUT |= SD_CS;
-	
-	UCB0CTLW0 = UCSWRST | UCSSEL_2;
-	UCB0CTLW0 |= UCCKPH | UCMSB | UCSYNC | UCMST;
-	UCB0BR0 = SPI_CLOCK_DIV2 & 0xFF;
-	UCB0BR1 = (SPI_CLOCK_DIV2 >> 8 ) & 0xFF;
-	//UCB0CTLW0 &= ~UCCKPL;
-	UCB0CTLW0 &= ~UCSWRST;
-	QF_INT_ENABLE();
-	__no_operation();
-	return 1;
+	sd_disable();
+	return return_val;
 }
 
 uint8_t LogRead(uint8_t log_name, char* line_contents, uint8_t line_size, uint8_t start_line, int n_lines, uint8_t requestor) {
-	QF_INT_DISABLE();
-	__no_operation();
-	PJOUT &= ~BIT7;
-	SD_CS_OUT &= ~SD_CS;
+	uint8_t return_val = 1;
+
 	if (SDExist() != 0)
 		return 1;
 
-	// Make sure the SD card is on
-	sd_card_power_on();
-	__delay_cycles(10);
+	sd_enable();
 
 	// Convert the APP's log name (an integer) to a filename (a char array).
  	char logKey[10];
@@ -172,43 +129,21 @@ uint8_t LogRead(uint8_t log_name, char* line_contents, uint8_t line_size, uint8_
 		f_lseek(&logfile, start_line*line_size);               // Move forward by start_line*line_size; logfile.fsize+1 is not needed in this application
 		f_read (&logfile, line_contents, line_size, &bw);      // Read data from a file
 		f_close(&logfile);                                     // Close the file
-		// Turn off SD card
-		sd_card_power_off();
-		
-		UCB0CTLW0 = UCSWRST | UCSSEL_2;
-		UCB0CTLW0 |= UCCKPH | UCMSB | UCSYNC | UCMST;
-		UCB0BR0 = SPI_CLOCK_DIV2 & 0xFF;
-		UCB0BR1 = (SPI_CLOCK_DIV2 >> 8 ) & 0xFF;
-		//UCB0CTLW0 &= ~UCCKPL;
-		UCB0CTLW0 &= ~UCSWRST;
-		QF_INT_ENABLE();
-		__no_operation();
-		return 0;
+
+		return_val = 0;
 	}
-	// Turn off SD card
-	sd_card_power_off();
-	SD_CS_OUT |= SD_CS;
-	UCB0CTLW0 = UCSWRST | UCSSEL_2;
-	UCB0CTLW0 |= UCCKPH | UCMSB | UCSYNC | UCMST;
-	UCB0BR0 = SPI_CLOCK_DIV2 & 0xFF;
-	UCB0BR1 = (SPI_CLOCK_DIV2 >> 8 ) & 0xFF;
-	//UCB0CTLW0 &= ~UCCKPL;
-	UCB0CTLW0 &= ~UCSWRST;
-	QF_INT_ENABLE();
-	__no_operation();
-	return 1;
+	sd_disable();
+	return return_val;
 }
 
 
 uint16_t LogRead2(uint8_t log_name, char* line_contents, uint16_t line_size, uint16_t start_line, int n_lines, uint8_t requestor) {
-	PJOUT &= ~BIT7;
-	SD_CS_OUT &= ~SD_CS;
+	uint8_t return_val = 1;
+
 	if (SDExist() != 0)
 		return 1;
 
-	// Make sure the SD card is on
-	sd_card_power_on();
-	__delay_cycles(10);
+	sd_enable();
 
 	// Convert the APP's log name (an integer) to a filename (a char array).
  	char logKey[10];
@@ -219,26 +154,9 @@ uint16_t LogRead2(uint8_t log_name, char* line_contents, uint16_t line_size, uin
 		f_lseek(&logfile, start_line*line_size);               // Move forward by start_line*line_size; logfile.fsize+1 is not needed in this application
 		f_read (&logfile, line_contents, line_size, &bw);      // Read data from a file
 		f_close(&logfile);                                     // Close the file
-		// Turn off SD card
-		sd_card_power_off();
-		
-		UCB0CTLW0 = UCSWRST | UCSSEL_2;
-		UCB0CTLW0 |= UCCKPH | UCMSB | UCSYNC | UCMST;
-		UCB0BR0 = SPI_CLOCK_DIV2 & 0xFF;
-		UCB0BR1 = (SPI_CLOCK_DIV2 >> 8 ) & 0xFF;
-		//UCB0CTLW0 &= ~UCCKPL;
-		UCB0CTLW0 &= ~UCSWRST;
-		
-		return 0;
+
+		return_val = 0;
 	}
-	// Turn off SD card
-	sd_card_power_off();
-	SD_CS_OUT |= SD_CS;
-	UCB0CTLW0 = UCSWRST | UCSSEL_2;
-	UCB0CTLW0 |= UCCKPH | UCMSB | UCSYNC | UCMST;
-	UCB0BR0 = SPI_CLOCK_DIV2 & 0xFF;
-	UCB0BR1 = (SPI_CLOCK_DIV2 >> 8 ) & 0xFF;
-	//UCB0CTLW0 &= ~UCCKPL;
-	UCB0CTLW0 &= ~UCSWRST;
-	return 1;
+	sd_disable();
+	return return_val;
 }

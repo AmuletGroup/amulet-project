@@ -500,6 +500,10 @@ void snail_kite_initialize_pins() {
   // XL CS high
   PJDIR |= BIT6;
   PJOUT |= BIT6;
+  
+  // Turn SD off
+  SD_POWER_DIR |= SD_POWER;
+  SD_POWER_OUT |= SD_POWER;
 }
 
 /*..........................................................................*/
