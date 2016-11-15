@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="Clock" superclass="qpc::QActive">
+   <statechart>
+    <initial target="../1">
+     <action>AmuletTimer(1);</action>
+     <initial_glyph conn="10,12,5,0,19,1">
+      <action box="0,-2,4,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="Normal">
+     <entry> 
+      char time[10] = &quot;10:25AM&quot;;
+      char temp[5] = &quot;76F&quot;;
+      char date[10] = &quot;03/03/16&quot;;
+      char title[8] = &quot;Sun Ex&quot;;
+
+      AmuletDisplayClr();
+      AmuletBoldCenteredText(35, time);
+    
+
+      // Temp
+      uint8_t tt = AmuletTextWidth(temp);
+      AmuletRegularText(128 - tt - 4, 10, temp);
+
+      // Date
+      AmuletRegularCenteredText(20, date);
+
+      // Sun Exposure
+      AmuletRegularText(0, 70, title);
+      AmuletDrawFastHLine(0, 85, 128);
+      AmuletFillRect(4, 90, 20, 20);
+      AmuletFillRect(28, 100, 20, 10);
+      AmuletFillRect(52, 95, 20, 15);
+      AmuletFillRect(76, 90, 20, 20);
+      AmuletFillRect(100, 102, 20, 8);
+      
+      AmuletPushChangesToDisplay();  
+</entry>
+     <state_glyph node="19,13,20,10">
+      <entry box="1,2,19,5"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="65,48"/>
+   </statechart>
+  </class>
+  <attribute name="AO_Clock" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="Clock_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>Clock *me = (Clock *)AO_Clock;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;Clock_initial);
+//QTimeEvt_ctor(&amp;me-&gt;timeEvt, REQ_CHANGE_SIG);
+
+</code>
+  </operation>
+ </package>
+</model>
