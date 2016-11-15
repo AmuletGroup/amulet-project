@@ -12,7 +12,7 @@ The Amulet Project
 
 - the Amulet Firmware Toolchain
 - the Amulet Runtime
-- the ARP-View energy prediction and insight graphical tool ([check out a demo here](https://persistlab.github.io/amulet-project/arp-view-demo/))
+- the ARP-View energy prediction and insight graphical tool ([check out a demo here](https://arpview.herokuapp.com))
 - open reference hardware.
 
 To get started, first clone this repository (including all submodules):
