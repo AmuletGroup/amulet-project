@@ -7,7 +7,7 @@ Software
 You need to change the following to create your own app from the example app:
 * The file names of the QM and XML file; the app folder name.
 * The name of the constructor, the active object, and the code for constructor. In the following example, you should just use property editor to replace all "Pedometer" text to your own app name
-![MY_COOL_IMAGE](../documentation/media/qm_app_example.png)
+![MY_COOL_IMAGE](../media/qm_app_example.png)
 * Replace the app name in the xml file with your own app's name
 
 * When developing applications ("apps"), you will likely want to make function calls into the system to do things like get data from a sensor, write information to a log, or update the display with information from your app --- just to name a few examples. You can find the relevant Amulet APIs here: [http://www.cs.dartmouth.edu/~amulet/docs/files.html](http://www.cs.dartmouth.edu/~amulet/docs/files.html). In order to access the docs stored on the dartmouth servers you'll need the login information: 
