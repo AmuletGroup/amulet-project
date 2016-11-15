@@ -12,7 +12,7 @@ If you do not already have the Amulet hardware, or have not yet set it up, pleas
 
 Setup an Amulet Build Environment on Mac OSX
 ===
-1. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
+1. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules. NOTE: Depending on your version of git, the --recursive option might not work. If that is the case, then you will need to navigate to both ``firmware/native`` and ``firmware/ble`` and run ``git submodule init`` and ``git submodule update`` to pull in the submodules.
 
 		git clone --recursive https://gitlab.cs.dartmouth.edu/amulet/amulet-dev.git
 
