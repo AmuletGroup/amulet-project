@@ -20,6 +20,7 @@ To get started, first clone this repository (including all submodules):
 ```
 git clone --recursive https://github.com/AmuletGroup/amulet-project.git
 ```
+Please use Github's Issue tracking software to submit any issues or concerns regarding the codebase.
 
 **[You can follow this guide to get hardware.](hardware/README.md)**<br>
 **[Then follow this guide to setup your environment.](GETTING_STARTED.md)**
