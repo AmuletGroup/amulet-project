@@ -58,7 +58,7 @@ Setup an Amulet Build Environment on Mac OSX
 		qm_3.3.0-mac64.dmg
 		qmc_3.3.0-mac64.dmg
 
-10. Finally, navigate to ``~/path_to_amulet-dev/amulet-dev/firmware/bsl/lib-qpc/ports/msp430/vanilla/ccs-mspx``, and update lines 53, 54, and 65 (shown below) with YOUR username. Then, run ``make`` to build ``~/path_to_amulet-dev/amulet-dev/firmware/bsl/lib-qpc/ports/msp430/vanilla/ccs-mspx/dbg/libqp.a``, which will be used during the firmware compilation process.
+10. Finally, navigate to ``~/path_to_amulet-dev/amulet-dev/firmware/native/lib-qpc/ports/msp430/vanilla/ccs-mspx``, and update lines 53, 54, and 65 (shown below) with YOUR username. Then, run ``make`` to build ``~/path_to_amulet-dev/amulet-dev/firmware/native/lib-qpc/ports/msp430/vanilla/ccs-mspx/dbg/libqp.a``, which will be used during the firmware compilation process.
 
 		CC  = /Users/taylorhardin/ti/gcc/bin/msp430-elf-gcc
 		LIB = /Users/taylorhardin/ti/gcc/bin/msp430-elf-ar
@@ -75,20 +75,16 @@ The following code is an example of an Amulet Firmware Toolchain (AFT) .config f
 	    #
 
 	    #amulet_root is the path to root of the amulet repo
-	    amulet_root: ~/Repos/amulet-dev 								# mac build environment
-	    # amulet_root: /home/vagrant/Repos/amulet-dev 							# vagrant default build environment
+	    amulet_root: ~/Repos/amulet-project 								# mac build environment
 
 	    #amulet_apps is the path to root of the applications directory
-	    amulet_apps: ~/Repos/amulet-dev/applications 					# mac build environment
-	    # amulet_apps: /home/vagrant/Repos/amulet-dev/applications          	# vagrant default build environment
+	    amulet_apps: ~/Repos/amulet-project/applications 					# mac build environment
 
 	    #qpc_root is the path to root of the lib-qpc repo
-	    qpc_root: ~/Repos/amulet-dev/firmware/bsl/lib-qpc            # mac build environment
-	    # qpc_root: /home/vagrant/Repos/amulet-dev/firmware/bsl/lib-qpc 		# vagrant default build environment
+	    qpc_root: ~/Repos/amulet-project/firmware/native/lib-qpc            # mac build environment
 
 	    # qmc_path is the path of the qmc executable
 	    qmc_path: /Applications/qmc.app/Contents/MacOS 					# mac build environment
-	    # qmc_path: /home/vagrant/qm/bin/ 										# vagrant default build environment
 
 	    #
 	    # Build Configuration.

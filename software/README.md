@@ -18,7 +18,7 @@ You need to change the following to create your own app from the example app:
 	* **NOTE:** *It used to be that applications were required to specify a "requestor ID" as part of any call made to the underlying amulet system. The AFT now automatically inserts this to ensure that apps are honest when providing this ID. Therefore, you should not add any argument manually to attempt to tell the system which app is calling the function as this will be handled automatically*.
 
 
-* Something important to note is that we envision the amulet to be a very *secure* platform for applications to run on. One aspect of accomplishing this is making sure that applications only have permission to do the things they need to do: no more, no less. Currently, we require each app to include a meta data file similar to the "Manifest" files used by every Android application. To see an example of such a file, take a look at the [Bite Counter app "manifest" flie](bite_counter/bite_counter.xml). 
+* Something important to note is that we envision the amulet to be a very *secure* platform for applications to run on. One aspect of accomplishing this is making sure that applications only have permission to do the things they need to do: no more, no less. Currently, we require each app to include a meta data file similar to the "Manifest" files used by every Android application. To see an example of such a file, take a look at the [Battery Meter app "manifest" flie](battery_meter/battery_meter.xml). 
 
 	* The best/easiest way to get started is to copy an `.xml` file from another app folder such as the one linked above.
 
