@@ -131,7 +131,7 @@ Program an Amulet Device
 4. Connect your Amulet to the computer using the [TagConnect JTAG Dongle](http://www.tag-connect.com/what-is-tag-connect) connected to a programmer; this programmer can either be a MSP430FET, or a MSP430FRX9X9 launchpad. If you are using a launchpad, the picture below shows how to hook up the TagConnect [SPI-BI-WIRE connector](documentation/media/tag-connect-spi-bi-wire.jpg) and [POGO PIN wire](documentation/media/tag-connect-pogo-wire.jpg) to a launchpad.
 
 	<div>
-		<img style="float: left; margin-right: 1%; margin-bottom: 0.5em;" src="documentation/media/launchpad-hookup.jpg" height="250px" alt="launchpad connections"/>
+		<img style="float: left; margin-right: 1%; margin-bottom: 0.5em;" src="media/launchpad-hookup.jpg" height="250px" alt="launchpad connections"/>
 		<p style="clear: both;">
 	</div>  
 
