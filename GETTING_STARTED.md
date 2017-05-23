@@ -12,7 +12,7 @@ If you do not already have the Amulet hardware, or have not yet set it up, pleas
 
 Setup an Amulet Build Environment on Mac OSX
 ===
-1. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules. NOTE: Depending on your version of git, the --recursive option might not work. If that is the case, then you will need to navigate to both ``firmware/native`` and ``firmware/ble`` and run ``git submodule init`` and ``git submodule update`` to pull in the submodules.
+1. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
 
 		git clone --recursive https://gitlab.cs.dartmouth.edu/amulet/amulet-dev.git
 
@@ -58,7 +58,7 @@ Setup an Amulet Build Environment on Mac OSX
 		qm_3.3.0-mac64.dmg
 		qmc_3.3.0-mac64.dmg
 
-10. Finally, navigate to ``~/path_to_amulet-dev/amulet-dev/firmware/native/lib-qpc/ports/msp430/vanilla/ccs-mspx``, and update lines 53, 54, and 65 (shown below) with YOUR username. Then, run ``make`` to build ``~/path_to_amulet-dev/amulet-dev/firmware/native/lib-qpc/ports/msp430/vanilla/ccs-mspx/dbg/libqp.a``, which will be used during the firmware compilation process.
+10. Finally, navigate to ``~/path_to_amulet-dev/amulet-dev/firmware/bsl/lib-qpc/ports/msp430/vanilla/ccs-mspx``, and update lines 53, 54, and 65 (shown below) with YOUR username. Then, run ``make`` to build ``~/path_to_amulet-dev/amulet-dev/firmware/bsl/lib-qpc/ports/msp430/vanilla/ccs-mspx/dbg/libqp.a``, which will be used during the firmware compilation process.
 
 		CC  = /Users/taylorhardin/ti/gcc/bin/msp430-elf-gcc
 		LIB = /Users/taylorhardin/ti/gcc/bin/msp430-elf-ar
@@ -75,16 +75,20 @@ The following code is an example of an Amulet Firmware Toolchain (AFT) .config f
 	    #
 
 	    #amulet_root is the path to root of the amulet repo
-	    amulet_root: ~/Repos/amulet-project 								# mac build environment
+	    amulet_root: ~/Repos/amulet-dev 								# mac build environment
+	    # amulet_root: /home/vagrant/Repos/amulet-dev 							# vagrant default build environment
 
 	    #amulet_apps is the path to root of the applications directory
-	    amulet_apps: ~/Repos/amulet-project/applications 					# mac build environment
+	    amulet_apps: ~/Repos/amulet-dev/applications 					# mac build environment
+	    # amulet_apps: /home/vagrant/Repos/amulet-dev/applications          	# vagrant default build environment
 
 	    #qpc_root is the path to root of the lib-qpc repo
-	    qpc_root: ~/Repos/amulet-project/firmware/native/lib-qpc            # mac build environment
+	    qpc_root: ~/Repos/amulet-dev/firmware/bsl/lib-qpc            # mac build environment
+	    # qpc_root: /home/vagrant/Repos/amulet-dev/firmware/bsl/lib-qpc 		# vagrant default build environment
 
 	    # qmc_path is the path of the qmc executable
 	    qmc_path: /Applications/qmc.app/Contents/MacOS 					# mac build environment
+	    # qmc_path: /home/vagrant/qm/bin/ 										# vagrant default build environment
 
 	    #
 	    # Build Configuration.
@@ -120,13 +124,18 @@ Program an Amulet Device
 
 		./aft --all --verbose --rebuild-abt Path_To_Your_Config_File/[your_config_file].config
 
-4. If you already compiled the build system, then you can use the following command inside of the ``amulet-dev/firmware/aft`` folder to compile your firmware image. If, for whatever reason, you want to re-compile the build system, then use the above command instead. Again, ``--verbose`` is optional.
+3. If you already compiled the build system, then you can use the following command inside of the ``amulet-dev/firmware/aft`` folder to compile your firmware image. If, for whatever reason, you want to re-compile the build system, then use the above command instead. Again, ``--verbose`` is optional.
 
 		./aft --all --verbose Path_To_Your_Config_File/[your_config_file].config 
 
-5. Connect your Amulet to the computer using the [TagConnect JTAG Dongle](http://www.tag-connect.com/what-is-tag-connect) connected to a programmer; this programmer can either be a MSP430FET, or a MSP430FRX9X9 launchpad.
+4. Connect your Amulet to the computer using the [TagConnect JTAG Dongle](http://www.tag-connect.com/what-is-tag-connect) connected to a programmer; this programmer can either be a MSP430FET, or a MSP430FRX9X9 launchpad. If you are using a launchpad, the picture below shows how to hook up the TagConnect [SPI-BI-WIRE connector](documentation/media/tag-connect-spi-bi-wire.jpg) and [POGO PIN wire](documentation/media/tag-connect-pogo-wire.jpg) to a launchpad.
 
-6. Run the following command to install the firmware image onto your Amulet. Afterwards, the device should be fully programmed and ready to use. You should see a clock on the display with the current time.
+	<div>
+		<img style="float: left; margin-right: 1%; margin-bottom: 0.5em;" src="documentation/media/launchpad-hookup.jpg" height="250px" alt="launchpad connections"/>
+		<p style="clear: both;">
+	</div>  
+
+5. Run the following command to install the firmware image onto your Amulet. Afterwards, the device should be fully programmed and ready to use. You should see a clock on the display with the current time.
 
 		./aft --install-binary Path_To_Your_Config_File/[your_config_file].config
 
