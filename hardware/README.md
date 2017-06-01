@@ -3,7 +3,10 @@ Hardware
 The Amulet wearable prototype is mostly a single-board system. 
 The main board, battery, haptic buzzer, and secondary storage board are all housed in a custom-designed 3D-printed case that fits a standard 22mm off-the-shelf watchband.
 
-####Features
+<img align="left" src="../media/amulet_left_vertical.jpg" height="350px" alt="Amulet Wearable"/>
+
+
+#### Features
 - **Processing**: 
   - Texas Instruments MSP430FR5989, 2 KB SRAM and 128 KB of FRAM
 - **Sensing**: 
@@ -27,14 +30,14 @@ The main board, battery, haptic buzzer, and secondary storage board are all hous
   - 110mAh battery
 
 
-###Getting an Amulet
+### Getting an Amulet
 Currently you can only request pre-built Amulet's from us by contacting jhester@clemson.edu, if you are part of a research lab we will generally accept your request.
-Since Amulet is open source and open ahrdware, you can build your own!
+Since Amulet is open source and open hardware, you can build your own!
 
 [Order boards from Circuithub](https://circuithub.com/projects/jhester/watch)
 
-###Assembling an Amulet
+### Assembling an Amulet
 [Refer to this PDF guide on building your own amulet.](SKAssemblyGuide.pdf)
 
-###Programming an Amulet
+### Programming an Amulet
 [Refer to this guide for how to set up your dev environment and program an amulet.](../GETTING_STARTED.md)

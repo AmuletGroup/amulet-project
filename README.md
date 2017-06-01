@@ -39,8 +39,6 @@ Amulet efficiently protects applications from each other without MMU support, al
 We also aim to equip the health-behavior science community with a wearable platform researchers can field for long-duration experiments on human subjects in a wide variety of studies, by providing the entire Amulet Platform as an open-source, open-hardware alternative to the available commercial platforms that have so far been used for wearables research. 
 We envision the Amulet Platform as being broadly applicable to those in the sensing communities, as well as domain scientists and practitioners in human-centered fields like health and fitness. With the Amulet Platform, sensor researchers can prototype new wearable devices and test new sensing technology without building from scratch.
 
-<img align="left" src="media/amulet_left_vertical.jpg" height="350px" alt="Amulet Wearable"/>
-
 ---
 
 ### Contributors and Acknowledgements
