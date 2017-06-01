@@ -3,9 +3,6 @@ Hardware
 The Amulet wearable prototype is mostly a single-board system. 
 The main board, battery, haptic buzzer, and secondary storage board are all housed in a custom-designed 3D-printed case that fits a standard 22mm off-the-shelf watchband.
 
-<img align="left" src="../media/amulet_left_vertical.jpg" height="350px" alt="Amulet Wearable"/>
-
-
 #### Features
 - **Processing**: 
   - Texas Instruments MSP430FR5989, 2 KB SRAM and 128 KB of FRAM
