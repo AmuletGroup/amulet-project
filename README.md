@@ -1,10 +1,9 @@
 The Amulet Project
 =====
 <div>
-<img style="float: left; margin-right: 1%; margin-bottom: 0.5em;" src="media/amulet_wearable.jpg" height="250px" alt="Amulet Wearable"/>
-<img style="float: left; margin-right: 1%; margin-bottom: 0.5em;" src="media/amulet_inside.jpg" height="250px" alt="Amulet Wearable"/>
-<p style="clear: both;">
+<img style="float: left; margin-right: 5%; margin-bottom: 0.5em;" src="media/amulet_left_vertical.jpg" height="350px" alt="Amulet Wearable"/>
 </div>
+
 **The Amulet Project** envisions computational jewelry, in the form of a bracelet or pendant, that provide the properties essential for successful body-area mHealth networks. These devices coordinate the activity of the body-area network and provide a discreet means for communicating with their wearer. Such devices complement the capabilities of a smartphone, bridging the gap between the type of pervasive computing possible with a mobile phone and that enabled by wearable computing. Find more information on the [Amulet Project Website](https://amulet-project.org/)
 
 
@@ -24,7 +23,7 @@ git clone --recursive https://github.com/AmuletGroup/amulet-project.git
 **[You can follow this guide to get hardware.](hardware/README.md)**<br>
 **[Then follow this guide to setup your environment.](GETTING_STARTED.md)**
 
-####Table of Contents
+#### Table of Contents
 
 - [What is Amulet?](#what-is-amulet)
 - [Contributors and Acknowledgements](#contributors-and-acknowledgements)
@@ -33,7 +32,7 @@ git clone --recursive https://github.com/AmuletGroup/amulet-project.git
 
 ---
 
-###What is Amulet?
+### What is Amulet?
 
 The Amulet platform is a collection of hardware, software, and tools, that enabled long-lived wearable research and development, in a variety of scientific domains. 
 
