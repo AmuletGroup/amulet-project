@@ -34,7 +34,7 @@ Since Amulet is open source and open hardware, you can build your own!
 [Order boards from Circuithub](https://circuithub.com/projects/jhester/watch)
 
 ### Assembling an Amulet
-[Refer to this PDF guide on building your own amulet.](SKAssemblyGuide.pdf)
+[Refer to [this](../media/Amulet_DC_kitec_assembly.pdf) guide for assembling the Amulet companion board, and [this](../media/Amulet_kitec_case_assembly.pdf) guide for placing an amulet in a case.
 
 ### Programming an Amulet
 [Refer to this guide for how to set up your dev environment and program an amulet.](../GETTING_STARTED.md)
