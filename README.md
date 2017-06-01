@@ -1,8 +1,5 @@
 The Amulet Project
 =====
-<kbd>
-<img align="left" src="media/amulet_left_vertical.jpg" height="350px" alt="Amulet Wearable"/>
-</kbd>
 
 **The Amulet Project** envisions computational jewelry, in the form of a bracelet or pendant, that provide the properties essential for successful body-area mHealth networks. These devices coordinate the activity of the body-area network and provide a discreet means for communicating with their wearer. Such devices complement the capabilities of a smartphone, bridging the gap between the type of pervasive computing possible with a mobile phone and that enabled by wearable computing. Find more information on the [Amulet Project Website](https://amulet-project.org/)
 
@@ -41,6 +38,8 @@ Amulet efficiently protects applications from each other without MMU support, al
 
 We also aim to equip the health-behavior science community with a wearable platform researchers can field for long-duration experiments on human subjects in a wide variety of studies, by providing the entire Amulet Platform as an open-source, open-hardware alternative to the available commercial platforms that have so far been used for wearables research. 
 We envision the Amulet Platform as being broadly applicable to those in the sensing communities, as well as domain scientists and practitioners in human-centered fields like health and fitness. With the Amulet Platform, sensor researchers can prototype new wearable devices and test new sensing technology without building from scratch.
+
+<img align="left" src="media/amulet_left_vertical.jpg" height="350px" alt="Amulet Wearable"/>
 
 ---
 
