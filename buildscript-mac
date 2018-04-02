@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# 1. Download QM and QMC
+echo "Downloading QM Software..."
+cd ~/Downloads
+wget --no-check-certificate 'https://sourceforge.net/projects/qpc/files/QM/3.3.0/qm_3.3.0-mac64.dmg'
+wget --no-check-certificate 'https://sourceforge.net/projects/qpc/files/QM/3.3.0/qmc_3.3.0-mac64.dmg'
+hdiutil mount qm_3.3.0-mac64.dmg
+hdiutil mount qmc_3.3.0-mac64.dmg
+sudo cp -R "/Volumes/qm/qm.app" /Applications
+sudo cp -R "/Volumes/qmc/qmc.app" /Applications
+hdiutil unmount "/Volumes/qm"
+hdiutil unmount "/Volumes/qmc"
+rm -f qm_3.3.0-mac64.dmg
+rm -f qmc_3.3.0-mac64.dmg
+
+# 2. Download and install homebrew
+echo "Installing Homebrew..."
+cd ~/
+sudo chown -R $USER /usr/local
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+
+# 3. Install depndancies for mspdebug using brew
+echo "Installing mspdebug dependancies..."
+sudo chown -R $USER /usr/local/Cellar
+brew install libusb libusb-compat libelf
+brew upgrade libusb libusb-compat
+
+# 4. Clone the mspdebug repo and make the executable
+echo "Cloning and installing mspdebug..."
+cd ~/
+git clone anonymous@buffet.cs.clemson.edu:jhester/mspdebug-osx
+cd mspdebug-osx
+make
+
+# 5. Add mspdebug and tools to your path.
+echo "Adding mspdebug and tools to path..."
+sudo cp mspdebug /usr/bin
+sudo cp ~/ti/gcc/bin/libmsp430.dylib /usr/local/lib
+echo "export PATH=\"\$PATH:~/ti/gcc/bin\"" >> ~/.bashrc
+source ~/.bashrc
+
+# 6. Remove the mspdebug repo
+cd ~/
+rm -rf mspdebug-osx/
+echo "Welcome to amulet!"

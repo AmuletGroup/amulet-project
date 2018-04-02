@@ -1,0 +1,69 @@
+#!/bin/bash
+
+usr=amuletuser
+
+if [ ! -d ~/ti ]; then
+  echo "running update + upgrade ...."
+  sudo apt-get -qq update
+  sudo apt-get -qq upgrade
+  echo "installing dependencies ..."
+  sudo apt-get -qq install build-essential
+  sudo apt-get -qq install libusb-dev libreadline-dev
+  echo "    installing ruby..."
+  sudo apt-get -qq install ruby
+
+  echo "Installing mspgcc"
+  cd ~/Downloads
+  chmod +x msp430-gcc-full-linux-x64-installer-5.1.2.0.run
+  ./msp430-gcc-full-linux-x64-installer-5.1.2.0.run
+  export PATH=$PATH:/home/$usr/ti/gcc/bin
+fi
+if [ ! -d ~/mspdebug ]; then
+  echo "installing mspdebug...."
+  cd /home/$usr
+  sudo mkdir -p mspdebug
+  cd Downloads
+  sudo cp MSP430_DLL_Developer_Package_Rev_3_12_0_004.zip ../mspdebug
+  cd ../mspdebug
+  sudo unzip MSP430_DLL_Developer_Package_Rev_3_12_0_004.zip
+  sudo mv libmsp430.so libmsp430_32.so
+  sudo mv libmsp430_64.so libmsp430.so
+  export LD_LIBRARY_PATH=/home/$usr/mspdebug
+fi
+
+if [ ! -d ~/mspdebug/mspdebug ]; then
+  cd ~/mspdebug
+  sudo git clone https://github.com/dlbeer/mspdebug
+  cd mspdebug
+  make
+  sudo make install
+fi
+
+if type -p java; then
+  echo "java already installed"
+else
+  echo "installing java..."
+  sudo add-apt-repository ppa:webupd8team/java
+  sudo apt-get update
+  sudo apt-get install oracle-java8-installer
+fi
+
+if wine --version; then
+  echo "wine already installed"
+else
+  echo "installing wine..."
+  #enable 32 bit architecture
+  sudo dpkg --add-architecture i386
+  sudo wget -nc https://dl.winehq.org/wine-builds/Release.key
+  sudo apt-key add Release.key
+  sudo apt-add-repository https://dl.winehq.org/wine-builds/ubuntu/
+  sudo apt-get update
+  sudo apt-get install -y --install-recommends winehq-stable
+  winecfg
+fi
+
+echo "installing qm"
+sudo wget -nc https://sourceforge.net/projects/qpc/files/QM/3.3.0/qm_3.3.0-win64.exe/download
+cp download ~/.wine/drive_c/users/$usr/Downloads/download.exe
+wine ~/.wine/drive_c/users/$usr/Downloads/download.exe
+echo "Welcome to amulet!"
