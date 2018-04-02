@@ -1,12 +1,3 @@
-/*
- *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 package amulet.resourceprofiler;
 
 import java.util.Vector;
@@ -642,18 +633,13 @@ public class ResourceProfiler {
 
 				time = nLinesOfCode * AVG_LOC_TIME;
 			} else if (resource.name.equals(ComputationType.FOR_LOOP.text())) {
-				try {
-					// Get number of iterations in this loop.
-					double nIterations = resource.getNumLoopIterations();
+				// Get number of iterations in this loop.
+				double nIterations = resource.getNumLoopIterations();
 
-					// Get the number of lines of code.
-					double nLinesOfCode = resource.getIntExtra(Resource.EXTRA_LOOP_NUM_STATEMENTS);
+				// Get the number of lines of code.
+				double nLinesOfCode = resource.getIntExtra(Resource.EXTRA_LOOP_NUM_STATEMENTS);
 
-					time = (nLinesOfCode * AVG_LOC_TIME) * nIterations;
-				} catch(Exception e) {
-					System.err.println("**FAILED RESOURCE PARSING: skipping this resource");
-					System.err.println("	RESOURCE: "+resource+"");
-				}
+				time = (nLinesOfCode * AVG_LOC_TIME) * nIterations;
 			}
 			break;
 		case SENSOR_SUBSCRIPTION:
@@ -767,19 +753,13 @@ public class ResourceProfiler {
 				
 			} else if (resource.name.equals(ComputationType.FOR_LOOP.text())) {
 				// Get the number of lines of code.
-				// If double for-loop, then skip
-				try {
-					double nLinesOfCode = resource.getIntExtra(Resource.EXTRA_LOOP_NUM_STATEMENTS);
-					
-					// Get number of iterations in this loop.
-					double nIterations = resource.getNumLoopIterations();
-					
-					// Calculate cost.
-					cost = (ENERGY_COST_PER_LOC * nLinesOfCode) * nIterations;
-				} catch(Exception e) {
-					System.err.println("**FAILED RESOURCE PARSING: skipping this resource");
-					System.err.println("	RESOURCE: "+resource+"");
-				}
+				double nLinesOfCode = resource.getIntExtra(Resource.EXTRA_LOOP_NUM_STATEMENTS);
+				
+				// Get number of iterations in this loop.
+				double nIterations = resource.getNumLoopIterations();
+				
+				// Calculate cost.
+				cost = (ENERGY_COST_PER_LOC * nLinesOfCode) * nIterations;
 				
 			}
 			break;

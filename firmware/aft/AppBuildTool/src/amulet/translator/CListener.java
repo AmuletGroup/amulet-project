@@ -1,12 +1,3 @@
-/*
- *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 // Generated from C.g4 by ANTLR 4.2
 package amulet.translator;
 import org.antlr.v4.runtime.misc.NotNull;

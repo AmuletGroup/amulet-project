@@ -1,11 +1,3 @@
-/* *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 /**
  * @file: core_mode.h
  *
@@ -32,8 +24,6 @@ typedef enum SystemMode {
 
 /**
  * Set the current system mode.
- *
- * TODO: What does it mean for an app to be privileged and to be able to call this routine?
  *
  * @param mode the desired mode for the system (see: SystemMode).
  */

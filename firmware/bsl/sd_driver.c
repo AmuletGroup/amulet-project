@@ -1,15 +1,17 @@
 /* *
  *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
+ * Copyright 2016 by the Trustees of Dartmouth College and Clemson University,
+ * and
+ * distributed under the terms of the "Dartmouth College Non-Exclusive Research
+ * Use
+ * Source Code License Agreement" (for NON-COMMERCIAL research purposes only),
+ * as
  * detailed in a file named LICENSE.pdf within this repository.
  */
 
- 
 #include "sd_driver.h"
-#include "msp430fr5989.h"
 #include "bsp_init.h"
+#include "msp430fr5989.h"
 #include "qp_port.h"
 
 void sd_card_power_on() {
@@ -37,6 +39,7 @@ void SDinit(void) {
   SD_CS_SEL &= ~SD_CS;
   SD_CS_OUT |= SD_CS;
   SD_CS_DIR |= SD_CS;
+
 }
 
 // ** These were moved from core_storage.c, since they do not belong there.
@@ -50,6 +53,7 @@ void sd_enable() {
 }
 
 void sd_disable() {
+  __delay_cycles(100000);
   // Turn off SD card
   sd_card_power_off();
   SD_CS_OUT |= SD_CS;

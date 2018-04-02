@@ -1,17 +1,10 @@
-/* *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 /*
  * ADC_driver.c
  * written by gunnar pope on 4/2/2015
  * modified by Josiah Hester
  * modified by Steven Hearndon 3/9/2016
  * shearnd@clemson.edu
+ * example taken from MSP430 Microcontroller basics by John Davies, p 418
  *
  *
  */

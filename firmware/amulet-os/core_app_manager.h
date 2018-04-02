@@ -1,11 +1,3 @@
-/* *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 /**
  * @file core_app_manager.h
  *
@@ -37,8 +29,9 @@ struct AppQueue {
     char appName[MAX_DISPLAY_LEN];                                  // app's human-readable name
     char appShortName[MAX_STATUS_LEN];                              // app's short name (intended for status line)
     unsigned char appType;                                          // app's "type" (see: amulet.h)
-	uint8_t display_buffer[LCD_VERTICAL_MAX][DISPLAY_BUFFER_WIDTH];  // app's display buffer
-    char status_buffer[MAX_STATUS_LEN];                             // apps' status buffer
+	  uint8_t display_buffer[LCD_VERTICAL_MAX][DISPLAY_BUFFER_WIDTH]; // app's display buffer
+    char status_buffer[MAX_STATUS_LEN];                             // app's status buffer
+    bool value_headers_written;                                     // true if value headers have been written to current SD card
     App * next;                                                     // ptr to next app in LL
 };
 
@@ -65,8 +58,8 @@ void enqueueApp(App * head, App * new);
 int inQueueApp(App * head, uint16_t appID) ;
 
 /**
- * Given the id of a app, get the pointer to Active Object of the app. 
- * The Active Object is the QM state machine of the app. 
+ * Given the id of a app, get the pointer to Active Object of the app.
+ * The Active Object is the QM state machine of the app.
  *
  * @param head Head to the app queue
  * @param appID The ID for the query app
@@ -104,7 +97,7 @@ App * getGlobalAppQueueHead();
 App * getAppById(uint8_t appId);
 
 /**
- * Assumes there is only 1 emergency app. If more than 1 exists, this will 
+ * Assumes there is only 1 emergency app. If more than 1 exists, this will
  * select the first such app in the queue.
  *
  * @return None.

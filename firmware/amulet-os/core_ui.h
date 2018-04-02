@@ -1,14 +1,6 @@
-/* *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 /**
  *  @file core_ui.h
- *  @brief functions to interact with the screen 
+ *  @brief functions to interact with the screen
  *
  * TODO:
  * - Resolve where certain definitions will live. Below, definitions that are
@@ -170,6 +162,11 @@ void CoreDisplayClr(uint8_t requestor);
  */
 void CoreDisplayClrLN(uint8_t lineNumber, uint8_t requestor);
 
+/**
+ * Refresh the battery percent remaining in the status bar
+ * (Updates when Status updates and when timer goes off)
+ */
+void CoreRefreshBatteryStatus(bool forceRefresh);
 
 /**
  * Refresh the status line of the display (called after an app's status has changed
@@ -304,7 +301,7 @@ void CoreDrawLine(uint8_t x0, uint8_t y0, uint8_t x1, uint8_t y1, uint8_t reques
 
 /**
  * Draw vertical line on the screen, you should refresh the screen after draw
- * 
+ *
  * @param x the X coordinate of the starting point
  * @param y the Y coordinate of the starting point
  * @param h length of the line
@@ -313,7 +310,7 @@ void CoreDrawFastVLine(uint8_t x, uint8_t y, uint8_t h, uint8_t requestor);
 
 /**
  * Draw horizontal line on the screen, you should refresh the screen after draw
- * 
+ *
  * @param x the X coordinate of the starting point
  * @param y the Y coordinate of the starting point
  * @param h length of the line
@@ -326,7 +323,7 @@ uint8_t CoreDrawingAreaWidth();
 uint8_t CoreDrawingAreaHeight();
 
 /**
- * 
+ *
  * Turns on the capacitive touch timers
  * @param requestor [description]
  */

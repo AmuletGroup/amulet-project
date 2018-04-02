@@ -185,7 +185,7 @@ static void power_on (void){
 // Set the SSI speed to the max setting
 static void set_max_speed(void){
     UCxxCTLW0 |= UCSWRST;                                    //Put state machine in reset
-    UCxxBR0 = 32;                                            //f_UCxCLK = 8MHz/32 = 250kHz
+    UCxxBR0 = 1;                                            //f_UCxCLK = 8MHz/32 = 250kHz
     UCxxBR1 = 0;
     UCxxCTLW0 &= ~UCSWRST;                                   //Release USCI state machine
 }// TODO: Check speeds

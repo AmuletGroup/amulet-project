@@ -35,7 +35,7 @@ The basic flow of the script can be thought of as follows:
 
 # Usage
 
-	Usage: ./aft [options] file
+	Usage: ./aft [options] config_file
 
 	Convenience:
 

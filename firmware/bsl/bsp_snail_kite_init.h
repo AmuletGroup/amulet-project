@@ -1,11 +1,3 @@
-/* *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 
 #ifndef bsp_snail_kite_init_h
 #define bsp_snail_kite_init_h
@@ -44,6 +36,29 @@
 #define ACCEL_SPI_CLK BIT2  // P2.2 expansion port SCLK shared b/w SD card and display
 #define ACCEL_SPI_CLK_SEL0 P4SEL0
 #define ACCEL_SPI_CLK_SEL1 P4SEL1
+
+/**
+ * Capacitive Touch definitions related to the MPR121 and UCB0 I2C
+ */
+#define MPR121_SCL BIT7
+#define MPR121_SCL_PxSEL0 P1SEL0
+#define MPR121_SCL_PxSEL1 P1SEL1
+#define MPR121_SDA BIT6
+#define MPR121_SDA_PxSEL0 P1SEL0
+#define MPR121_SDA_PxSEL1 P1SEL1
+#define MPR121_IRQ BIT4
+#define MPR121_IRQ_PxIN P2IN
+#define MPR121_IRQ_PxDIR P2DIR
+#define MPR121_IRQ_PxOUT P2OUT
+#define MPR121_IRQ_PxREN P2REN
+#define MPR121_SLAVE_ADDR 0x5A
+
+#define UCxxCTLW0_MPR121 UCB0CTL0
+#define UCxxBRW_MPR121 UCB0BRW
+#define UCxxI2CSA_MPR121 UCB0I2CSA
+#define UCxxTXBUF_MPR121 UCB0TXBUF
+#define UCxxRXBUF_MPR121 UCB0RXBUF
+#define UCxxIE_MPR121 UCB0IE
 
 /**
  * Display definitions
@@ -244,7 +259,7 @@
 #define SPI_SOMI BIT5
 #define SPI_SIMO BIT4
 
-//#define UCxxIFG_imu UCB0IFG
+// #define UCxxIFG_imu UCA1IFG
 
 #define SPI_CLK_SEL P3SEL0
 #define SPI_CLK_DIR P3DIR

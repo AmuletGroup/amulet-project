@@ -1,11 +1,3 @@
-/* *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 /**
  *  @file core_ui.h
  *
@@ -58,9 +50,11 @@ void CoreUIInit() {
 	uint8_t i, j;
 	while (curr != NULL) {
 		// Initialize the curr app's display buffer.
-    	for (i = 0; i< LCD_VERTICAL_MAX; i++)
-        	for (j = 0; j< DISPLAY_BUFFER_WIDTH; j++)
+    	for (i = 0; i< LCD_VERTICAL_MAX; i++) {
+        	for (j = 0; j< DISPLAY_BUFFER_WIDTH; j++) {
             	curr->display_buffer[i][j] = 0xff;
+        	}
+    	}
 
 
 		curr = curr->next;
@@ -116,7 +110,6 @@ void CoreSwitchApp() {
 void CoreBringERAppForward() {
     // Refresh the screen only if a new app has come into the foreground.
     if (emergency_app != NULL && foreground_app != emergency_app) {
-		//bsp_printf("CoreBringAppForward: app switched -- refresh display.\r\n");
 		foreground_app = emergency_app;
 		//CoreRefreshDisplay(-1);
 		display_refresh();
@@ -160,6 +153,9 @@ bool CoreRequestMoveToFront(uint8_t requestor) {
 /* ************************************************************************** *
  *                                   Display
  * ************************************************************************** */
+
+uint8_t battery_status_x = 0;
+uint8_t last_battery_percent = 200;
 
 static uint8_t min(uint8_t a, uint8_t b) {
 	if (a <= b)
@@ -241,11 +237,34 @@ void CoreDisplayClrLN(uint8_t lineNumber, uint8_t requestor) {
     }
 }
 
+void CoreRefreshBatteryStatus(bool forceRefresh) {
+	uint8_t battery_percent = get_battery_level();
+	battery_percent = min(battery_percent, 100);
+
+	// Only refresh the display if the percent has changed
+	if (battery_percent != last_battery_percent || forceRefresh) {
+		last_battery_percent = battery_percent;
+		// Clear the area first
+		fillRect(battery_status_x, 0, display_width()-battery_status_x, STAT_BAR_HEIGHT, 0);
+
+		itoa(battery_percent, system_status_buffer, 10);
+		strcat(system_status_buffer,"%");
+		setFont(SourceSansProBold7);
+		drawText(display_width() - textWidth(system_status_buffer) - 17, 0, system_status_buffer, 1);
+		drawRect(display_width() - 14,1,13,11,1);
+		fillRect(display_width() - 16,4,3,6,1);
+
+		// Fill based on battery percent
+		fillRect(display_width() - 3 - battery_percent/10,1,battery_percent/10+1,11,1);
+	}
+
+}
+
 void CoreRefreshStatus(uint8_t requestor) {
 	// Update app's display buffer.
 	App * requestingApp = getAppById(requestor);
 	uint8_t (*display_buf_ptr)[LCD_HORIZONTAL_MAX/8] = requestingApp->display_buffer;
-    setDisplayBuffer(display_buf_ptr);
+  setDisplayBuffer(display_buf_ptr);
 
 	// Clear it first
 	fillRect(0, 0, display_width(), STAT_BAR_HEIGHT, 0);
@@ -253,22 +272,13 @@ void CoreRefreshStatus(uint8_t requestor) {
 	// App name
 	setFont(SourceSansProBold7);
 	drawText(0, 0, foreground_app->appName, 1);
+	battery_status_x = textWidth(foreground_app->appName) + 1;
 
 	// Divider line
 	drawFastHLine(0,STAT_BAR_HEIGHT-1,display_width(),1);
-    drawFastHLine(0, STAT_BAR_HEIGHT,display_width(),1);
+  drawFastHLine(0, STAT_BAR_HEIGHT,display_width(),1);
 
-	// Battery status
-	uint8_t battstat = get_battery_level();
-	battstat = min(battstat, 100);
-	itoa(battstat, system_status_buffer, 10);
-	strcat(system_status_buffer,"%");
-	drawText(display_width() - textWidth(system_status_buffer) - 17, 0, system_status_buffer, 1);
-	drawRect(display_width() - 14,1,13,11,1);
-	fillRect(display_width() - 16,4,3,6,1);
-
-	// Fill based on battery percent
-	fillRect(display_width() - 3 - battstat/10,1,battstat/10+1,11,1);
+	CoreRefreshBatteryStatus(true);
 }
 
 /************************************************************
@@ -355,7 +365,7 @@ uint8_t CoreDrawingAreaHeight() {
 }
 
 /**
- * 
+ *
  * Turns on the capacitive touch timers
  * @param requestor [description]
  */
@@ -465,7 +475,7 @@ void print_result(bool test) {
 
 // Test: system mode getter/setter.
 void test_SystemModes() {
-	
+
 	print_result(check_SystemModes(NORMAL_MODE, CoreGetSystemMode()));
 
 	CoreSetSystemMode(EMERGENCY_MAYBE_MODE);

@@ -1,23 +1,27 @@
-/* *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 #include "amulet.h"
-
-#ifdef SIFT_DATA_HACK
-#include "amulet_data.h"
-#endif
 
 //#define PROFLILNG
 #define PROFLILNG_DELAY 800
 #define PROFLILNG_DELAY_BEFORE 0
 #define PROFLILNG_LOOP 1
 
+#ifdef PROFLILNG
+  #define PROFILING_PRE_NO_LOOP PROFLILNG_PORT |= PROFLILNG_PIN; {
+  #define PROFILING_PRE PROFLILNG_PORT |= PROFLILNG_PIN; for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
+  #define PROFILING_POST } do{busy_wait(PROFLILNG_DELAY_BEFORE); \
+                              PROFLILNG_PORT &= (~PROFLILNG_PIN);\
+                              busy_wait(PROFLILNG_DELAY);} while(0)
+#else
+  #define PROFILING_PRE_NO_LOOP
+  #define PROFILING_PRE
+  #define PROFILING_POST
+#endif
+
+
 extern void itoa(int16_t value, char* result, int base);
+
+uint16_t lfsr = 11387432;
+uint16_t rand_bit;
 
 void busy_wait(uint32_t cycles) {
   volatile uint16_t i = 0;
@@ -30,31 +34,59 @@ void busy_wait(uint32_t cycles) {
 
 void AmuletSubscribeInternalSensor(uint8_t sensor_id, uint16_t expiration,
   uint16_t window_size, uint16_t window_interval, uint8_t requestor) {
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+    PROFILING_PRE
     SubscribeSensor(sensor_id, expiration, window_size, window_interval, requestor);
-    #ifdef PROFLILNG
-  }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+    PROFILING_POST
 }
 
 void AmuletUnsubscribeInternalSensor(uint8_t sensor_id, uint8_t requestor) {
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+    PROFILING_PRE
+
     UnsubscribeSensor(sensor_id, requestor);
-    #ifdef PROFLILNG
+
+    PROFILING_POST
+}
+
+// BLE packets from HRM arrive once per second, but they can contain
+// multiple RR values since a heart rate can be above 60bpm (once per
+// second).  So AmuletGetHRandRRI() returns HR, multiple RRI values, plus
+// other info:
+//
+//  Index ValueReturned
+//   0    Heart rate
+//   1    1st RRI
+//   2    2nd RRI
+//   ...  ...
+//   7    7th RRI
+//   8    expended energy
+//   9    sensor in contact with skin
+//
+// Any nonexistent RRI values will be returned as zero.
+// Valid index values are defined by an enum in amulet.h:
+//    HRM_HR = 0,
+//    HRM_RRI1 = 1,
+//    HRM_RRI2 = 2,
+//    HRM_RRI3 = 3,
+//    HRM_RRI4 = 4,
+//    HRM_RRI5 = 5,
+//    HRM_RRI6 = 6,
+//    HRM_RRI7 = 7,
+//    HRM_ENERGY = 8,
+//    HRM_CONTACT = 9
+//
+uint16_t AmuletGetHRandRRI(uint8_t idx, uint8_t requestor) {
+  uint16_t rv=0;
+
+  // Sanity check on idx value
+
+  if((idx >= 0) && (idx <= 9))
+  {
+    // Byte 0 of sensorData is sensor type
+    // Byte 1+2 are heart rate
+    // Byte 3+4 are RRI #1, etc.
+    rv = (sensorData[1+(idx*2)] + (sensorData[2+(idx*2)]<<8));
   }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+  return rv;
 }
 
 uint16_t AmuletGetRR(uint8_t requestor) {
@@ -69,11 +101,9 @@ uint16_t AmuletGetHR(uint8_t requestor) {
 
 uint16_t AmuletGetADC(enum InternalResource ir, uint8_t requestor) {
   uint16_t retval = 0;
-  #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
-    
+
+  PROFILING_PRE
+
   switch (ir) { // Decode day of week
   case BATTERY:
       retval = take_battery_reading();
@@ -91,14 +121,10 @@ uint16_t AmuletGetADC(enum InternalResource ir, uint8_t requestor) {
     retval = 0;
     break;
   }
-  
-  #ifdef PROFLILNG
-  }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-  #endif 
-  return retval; 
+
+  PROFILING_POST
+
+  return retval;
 }
 
 uint16_t AmuletAnalytics(enum AnalyticsResource ar, uint8_t requestor) {
@@ -112,7 +138,7 @@ uint16_t AmuletAnalytics(enum AnalyticsResource ar, uint8_t requestor) {
         retval = most_recent_ui_events;
         most_recent_ui_events = 0;
         break;
-  }   
+  }
   return retval;
 }
 
@@ -122,65 +148,49 @@ bool AmuletIsBLEPaired() {
 
 uint8_t AmuletGetBatteryLevel(uint8_t requestor) {
     uint8_t battery_reading;
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     battery_reading = get_battery_level();
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
+
     return battery_reading;
 }
 
 uint16_t AmuletGetLightLevel(uint8_t requestor) {
     uint16_t light_reading;
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     light_reading = take_light_reading();
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
+
     return light_reading;
 }
 
 uint16_t AmuletGetTemperature(uint8_t requestor) {
     uint16_t temp_reading;
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     temp_reading = get_temperature();
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
+
     return temp_reading;
 }
 
 uint16_t AmuletGetAudio(uint8_t requestor) {
     uint16_t audio_reading;
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     audio_reading = take_audio_reading();
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
+
     return audio_reading;
 }
 
@@ -205,6 +215,30 @@ int16_t AmuletGetAccelZ(uint8_t idx, uint8_t requestor) {
   //uint8_t i = idx*4;//0-->0
   //value = (sensorData[i+4] | sensorData[i+5]<<8);
   value = acc_buffer_z[idx];
+  return value;
+}
+
+int16_t AmuletGetGyroX(uint8_t idx, uint8_t requestor) {
+  int16_t value;
+  //uint8_t i = idx*4;//0-->0
+  //value = (sensorData[i] | sensorData[i+1]<<8);
+  value = gyro_buffer_x[idx];
+  return value;
+}
+
+int16_t AmuletGetGyroY(uint8_t idx, uint8_t requestor) {
+  int16_t value;
+  //uint8_t i = idx*4;//0-->0
+  //value = (sensorData[i+2] | sensorData[i+3]<<8);
+  value = gyro_buffer_y[idx];
+  return value;
+}
+
+int16_t AmuletGetGyroZ(uint8_t idx, uint8_t requestor) {
+  int16_t value;
+  //uint8_t i = idx*4;//0-->0
+  //value = (sensorData[i+4] | sensorData[i+5]<<8);
+  value = gyro_buffer_z[idx];
   return value;
 }
 
@@ -275,10 +309,10 @@ uint8_t AmuletClock(ClockType type, uint8_t requstor) {
 }
 
 void AmuletDateTimeText(__char_array target, uint8_t requestor){
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+
+    PROFILING_PRE
+
     uint8_t month, day, hour, min, sec, weekday;
     uint16_t year;
     CoreClock(&year, &month, &day, &hour, &min, &sec, &weekday);
@@ -332,19 +366,13 @@ void AmuletDateTimeText(__char_array target, uint8_t requestor){
       strcat(target.values,am);
 
 
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+    PROFILING_POST
 }
 
 void AmuletClockText(__char_array target1, __char_array target2, __char_array target3, uint8_t requestor){
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     uint8_t month, day, hour, min, sec, weekday;
     uint16_t year;
     CoreClock(&year, &month, &day, &hour, &min, &sec, &weekday);
@@ -392,19 +420,14 @@ void AmuletClockText(__char_array target1, __char_array target2, __char_array ta
     __char_array fmt2 = { .values = "%02d-%02d-%02d", .__arr_len = 5 };
     AmuletSprintf(target3, fmt2, month+1, day, year);
     // AmuletSprintf(target3, "%d-%d", month+1, day);
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
 }
 
 void AmuletDateText(__char_array target, uint8_t requestor){
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     uint16_t year;
     uint8_t month, day, hour, min, sec, weekday;
     CoreClock(&year, &month, &day, &hour, &min, &sec, &weekday);
@@ -413,19 +436,14 @@ void AmuletDateText(__char_array target, uint8_t requestor){
     __char_array fmt = { .values = "%02d-%02d-%02d", .__arr_len = 8 };
     AmuletSprintf(target, fmt, month+1, day, year);
     // AmuletSprintf(target, "%d-%d-%d", month, day, year);
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
 }
 
 void AmuletWeekText(__char_array target, uint8_t requestor){
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     uint8_t month, day, hour, min, sec, weekday;
     uint16_t year;
     CoreClock(&year, &month, &day, &hour, &min, &sec, &weekday);
@@ -455,12 +473,8 @@ void AmuletWeekText(__char_array target, uint8_t requestor){
     default:
         break;
     }
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
 }
 
 /*****************************************************************************
@@ -468,29 +482,21 @@ void AmuletWeekText(__char_array target, uint8_t requestor){
  *****************************************************************************/
 
 void AmuletTimer(uint16_t interval, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
 	CoreTimer(interval, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 void AmuletTimerCancel(uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-  #endif
+
+  PROFILING_PRE_NO_LOOP
+
 	CoreTimerCancel(requestor);
-  #ifdef PROFLILNG
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 /* ************************************************************************* *
@@ -515,229 +521,161 @@ void __helper_AmuletSetFont(FontType font, uint8_t requestor) {
 }
 
 void AmuletBoldText(uint8_t x, uint8_t y, __char_array message, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-  #endif
+  PROFILING_PRE_NO_LOOP
+
   __helper_AmuletSetFont(BOLD_FONT, requestor);
   CoreText(x, y, message.values, requestor);
-  #ifdef PROFLILNG
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletMediumText(uint8_t x, uint8_t y, __char_array message, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-  #endif
+
+  PROFILING_PRE_NO_LOOP
+
   __helper_AmuletSetFont(MEDIUM_FONT, requestor);
   CoreText(x, y, message.values, requestor);
-  #ifdef PROFLILNG
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletRegularText(uint8_t x, uint8_t y, __char_array message, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-  #endif
+
+  PROFILING_PRE_NO_LOOP
+
   __helper_AmuletSetFont(REGULAR_FONT, requestor);
   CoreText(x, y, message.values, requestor);
-  #ifdef PROFLILNG
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletBoldCenteredText(uint8_t y,  __char_array message, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-  #endif
-  __helper_AmuletSetFont(BOLD_FONT, requestor);    
+
+  PROFILING_PRE_NO_LOOP
+
+  __helper_AmuletSetFont(BOLD_FONT, requestor);
   CoreCenteredText(y, message.values, requestor);
-  #ifdef PROFLILNG
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletMediumCenteredText(uint8_t y,  __char_array message, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-  #endif
-  __helper_AmuletSetFont(MEDIUM_FONT, requestor);  
+
+  PROFILING_PRE_NO_LOOP
+
+  __helper_AmuletSetFont(MEDIUM_FONT, requestor);
   CoreCenteredText(y, message.values, requestor);
-  #ifdef PROFLILNG
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletRegularCenteredText(uint8_t y,  __char_array message, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-  #endif
+
+  PROFILING_PRE_NO_LOOP
+
   __helper_AmuletSetFont(REGULAR_FONT, requestor);
   CoreCenteredText(y, message.values, requestor);
-  #ifdef PROFLILNG
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletDrawRect(int16_t x, int16_t y, uint8_t w, uint8_t h, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreDrawRect(x, y, w, h, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletClearRect(int16_t x, int16_t y, uint8_t w, uint8_t h, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreClearRect(x, y, w, h, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletFillRect(int16_t x, int16_t y, uint8_t w, uint8_t h, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreFillRect(x, y, w, h, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletPushChangesToDisplay(uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CorePushChangesToDisplay(requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
-uint8_t AmuletTextWidth(__char_array message, uint8_t requestor) {  
+uint8_t AmuletTextWidth(__char_array message, uint8_t requestor) {
   uint8_t retval;
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   retval = textWidth(message.values);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
+
   return retval;
 }
 
 uint8_t AmuletTextHeight(uint8_t requestor) {
   uint8_t retval;
-  retval = textHeight(); 
+  retval = textHeight();
   return retval;
 }
 
 void AmuletDrawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreDrawLine(x0, y0, x1, y1, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletDrawFastVLine(int16_t x, int16_t y, int16_t h, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreDrawFastVLine(x, y,  h, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletDrawFastHLine(int16_t x, int16_t y, int16_t w, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreDrawFastHLine( x,  y,  w,  requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletDrawHeartImage(uint8_t x,uint8_t y, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreDrawHeartImage(x, y, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletDrawWalkerImage(uint8_t x,uint8_t y, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreDrawWalkerImage(x, y, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 uint8_t AmuletDrawingAreaWidth() {
@@ -751,103 +689,68 @@ uint8_t AmuletDrawingAreaHeight() {
 int8_t AmuletAddGraph(GraphType type, uint8_t x, uint8_t y, uint8_t w, uint8_t h,
                 uint8_t data_min, uint8_t data_max, uint8_t requestor) {
   int8_t retval;
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   retval = CoreAddGraph(type, x, y, w, h, data_min, data_max);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif    
+
+  PROFILING_POST
   return retval;
 }
 
 void AmuletAddGraphData(uint8_t data, uint8_t graph_id, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreAddGraphData(data, graph_id);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletDrawGraph(uint8_t graph_id, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreDrawGraph(graph_id, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif  
+
+  PROFILING_POST
 }
 
 void AmuletDisplayMessage(__char_array message, uint8_t line, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
 	CoreDisplayMessage(message.values, message.__arr_len, line, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 void AmuletDisplayClr(uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
 	CoreDisplayClr(requestor);
   CoreRefreshStatus(requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 void AmuletDisplayClrLN(uint8_t lineNumber, uint8_t requestor){
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
 	CoreDisplayClrLN(lineNumber, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 void AmuletDrawSunImage(uint8_t x,uint8_t y, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
   CoreDrawSunImage(x, y, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 //
@@ -875,50 +778,35 @@ ButtonSide AmuletButtonSide(uint8_t id, uint8_t requestor) {
 //
 
 void AmuletLEDOff(LED ledId, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
 	CoreSetLed(ledId, LED_OFF, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 void AmuletLEDOn(LED ledId, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
 	CoreSetLed(ledId, LED_ON, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 void AmuletLEDBlink(LED ledId, uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
+
+  PROFILING_PRE
+
 	// need to use timer to blink
 	CoreSetLed(ledId, LED_BLINK, requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_POST
 }
 
 /**
- * 
+ *
  * Turns on the capacitive touch timers
  * @param requestor [description]
  */
@@ -939,31 +827,21 @@ void AmuletTurnOffCapTouch(uint8_t requestor) {
 //
 
 void AmuletHapticSingleBuzz(uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
-	CoreHapticSingleBuzz(requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_PRE
+
+  CoreHapticSingleBuzz(requestor);
+
+  PROFILING_POST
 }
 
 void AmuletHapticDoubleBuzz(uint8_t requestor) {
-  #ifdef PROFLILNG
-    PROFLILNG_PORT |= PROFLILNG_PIN;
-    for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-  #endif
-	CoreHapticDoubleBuzz(requestor);
-  #ifdef PROFLILNG
-  }
-    busy_wait(PROFLILNG_DELAY_BEFORE);
-    PROFLILNG_PORT &= (~PROFLILNG_PIN);
-    busy_wait(PROFLILNG_DELAY);
-  #endif
+
+  PROFILING_PRE
+
+  CoreHapticDoubleBuzz(requestor);
+
+  PROFILING_POST
 }
 
 /*****************************************************************************
@@ -997,6 +875,13 @@ static bool checkCanChangeSysMode(SystemMode newMode, uint8_t requestor) {
     // // System change requirements not met -- request to change system mode denied.
     // return FALSE;
 }
+
+uint64_t AmuletGetUUID(uint8_t requestor) {
+
+    uint64_t * const uuidPtr = (uint64_t * const) AMULET_UUID_ADDR;
+    return *uuidPtr;
+}
+
 
 bool AmuletIsForegroundApp(uint8_t requestor) {
     return (CoreGetForegroundAppId() == requestor);
@@ -1058,17 +943,13 @@ bool AmuletRequestMoveToFront(uint8_t requestor) {
 
 uint8_t AmuletSDPresent(uint8_t requestor) {
     uint8_t rv;
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     rv = SDExist();
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
+
     return rv;
 }
 
@@ -1077,37 +958,75 @@ uint8_t AmuletSDPresent(uint8_t requestor) {
  */
 uint8_t AmuletLogAppend(uint8_t log_name, __char_array line_contents, uint8_t requestor) {
     uint8_t rv;
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     rv = LogAppend(log_name, line_contents.values, line_contents.__arr_len, requestor);
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
     return rv;
 }
 
+// uint8_t AmuletLogTextData(uint8_t log_name, char *field_name, __char_array
+// data,
+//                           uint8_t requestor) {
+//   uint8_t rv;
+// #ifdef PROFILING
+//   PROFILING_PORT |= PROFILING_PIN;
+//   for (uint16_t k = 0; k < PROFILING_LOOP; k++) {
+// #endif
+//     rv = LogTextData(log_name, field_name, data.values, requestor);
+// #ifdef PROFILING
+//   }
+//   busy_wait(PROFILING_DELAY_BEFORE);
+//   PROFILING_PORT &= (~PROFILING_PIN);
+//   busy_wait(PROFILING_DELAY);
+// #endif
+//   return rv;
+// }
+//
+// uint8_t AmuletLogIntData(uint8_t log_name, char *field_name, uint16_t value,
+//                          uint8_t requestor) {
+//   uint8_t rv;
+// #ifdef PROFILING
+//   PROFILING_PORT |= PROFILING_PIN;
+//   for (uint16_t k = 0; k < PROFILING_LOOP; k++) {
+// #endif
+//     rv = LogIntData(log_name, field_name, value, requestor);
+// #ifdef PROFILING
+//   }
+//   busy_wait(PROFILING_DELAY_BEFORE);
+//   PROFILING_PORT &= (~PROFILING_PIN);
+//   busy_wait(PROFILING_DELAY);
+// #endif
+//   return rv;
+// }
+
+void AmuletStartLogTransaction() {
+  CoreStartLogTransaction();
+}
+
+uint8_t AmuletCommitLogTransaction() {
+  return CoreCommitLogTransaction();
+}
+
+
 /*
- * IS THIS A BLOCKING ROUTINE NOW THAT WE AREN'T USING STATE MACHINES?!
+ * value_headers: the title for each column of values being logged separated
+ *                by commas. e.g. for BatteryMeter, it could be "batt_%, adc"
+ * data: all data to be logged; in the form of data[0] = log id,
+ *       [1] = number of data values, [3] = data values
  */
-uint8_t AmuletLogRead(uint8_t log_name, __char_array line_contents, uint8_t start_line, int n_lines, uint8_t requestor) {
-    uint8_t rv;
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
-    rv = LogRead(log_name, line_contents.values, line_contents.__arr_len, start_line, n_lines, requestor);
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
-    return rv;
+uint8_t AmuletLogData(uint16_t logid, __char_array value_headers, __float_array data, 
+                      uint8_t requestor) {
+  uint8_t rv;
+  PROFILING_PRE
+
+    rv = LogData(logid,value_headers.values, data.values, data.__arr_len);
+
+  PROFILING_POST
+
+  return rv;
 }
 
 /*****************************************************************************
@@ -1115,19 +1034,14 @@ uint8_t AmuletLogRead(uint8_t log_name, __char_array line_contents, uint8_t star
  *****************************************************************************/
 
 void AmuletStateTransition(QActive * const me, int sig, uint8_t requestor) {
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      // These APIs' behavior will be quite different if call multiple times
-      // do I didn't put the for loop here.
-    #endif
+
+    PROFILING_PRE_NO_LOOP
+
     AmuletEvt *evt;
     evt = Q_NEW(AmuletEvt, sig);
     QACTIVE_POST(me, &evt->super, NULL);
-    #ifdef PROFLILNG
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
 }
 
 /*****************************************************************************
@@ -1145,34 +1059,51 @@ void AmuletStateTransition(QActive * const me, int sig, uint8_t requestor) {
 //  return requestingApp->appShortName;
 // }
 
+void AmuletWrapText(__char_array target, uint16_t wrapline, uint8_t requestor ){
+
+    PROFILING_PRE
+    char s[150];
+    strcpy(s,target.values);
+    int lastwrap = 0; // saves character index after most recent line wrap
+    int wraploc = 0; // used to find the location for next word wrap
+    for (int i = 0; s[i] != '\0'; ++i, ++wraploc) {
+
+        if (wraploc >= wrapline) {
+            for (int k = i; k > 0; --k) {
+                // make sure word wrap doesn't overflow past maximum length
+                if (k - lastwrap <= wrapline && s[k] == ' ') {
+                    s[k] = '\n';
+                    lastwrap = k+1;
+                    break;
+                }
+            }
+            wraploc = i-lastwrap;
+        }
+
+    } // end main loop
+    strcpy(target.values, s);
+
+    PROFILING_POST
+}
+
 void AmuletITOA(int16_t source, __char_array target, uint8_t requestor ){
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     char result[10];
     itoa(source, result,10);
     strcpy(target.values, result);
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
 }
 
 void AmuletConcat(__char_array target, __char_array to_add, uint8_t requestor) {
-    #ifdef PROFLILNG
-      PROFLILNG_PORT |= PROFLILNG_PIN;
-      for(uint16_t k=0;k<PROFLILNG_LOOP;k++){
-    #endif
+
+    PROFILING_PRE
+
     strcat(target.values, to_add.values);
-    #ifdef PROFLILNG
-    }
-      busy_wait(PROFLILNG_DELAY_BEFORE);
-      PROFLILNG_PORT &= (~PROFLILNG_PIN);
-      busy_wait(PROFLILNG_DELAY);
-    #endif
+
+    PROFILING_POST
 }
 
 void AmuletSprintf(__char_array target, __char_array fmt, ... ) {
@@ -1307,6 +1238,14 @@ void AmuletFloatToString(float f, __char_array target, uint8_t requestor){
 
 }
 
+uint16_t AmuletRand(uint16_t seed, uint8_t requestor){
+  if (seed>10000){
+    lfsr=seed;
+  }
+  rand_bit  = ((lfsr >> 0) ^ (lfsr >> 2) ^ (lfsr >> 3) ^ (lfsr >> 5) ) & 1;
+  return lfsr =  (lfsr >> 1) | (rand_bit << 15);
+}
+
 uint16_t AmuletATOI(__char_array source, uint8_t requstor) {
     char *p = source.values;
     uint8_t k = 0, i = 0;
@@ -1332,33 +1271,3 @@ uint16_t AmuletReadfromFile(uint8_t log_name, __char_array line_contents, uint16
 uint32_t AmuletSeconds(uint8_t requestor) {
   return CoreSeconds(requestor);
 }
-
-#ifdef SIFT_DATA_HACK
-void AmuletGetECG(__float_array target, uint8_t requestor){
-  uint16_t i = 0;
-  for (i = 0; i < target.__arr_len;i++){
-    target.values[i] = ecg[i];
-  }
-}
-
-void AmuletGetABP(__float_array target, uint8_t requestor){
-  uint16_t i = 0;
-  for (i = 0; i < target.__arr_len;i++){
-    target.values[i] = abp[i];
-  }
-}
-
-void AmuletGetRPKS(__uint8_t_array target, uint8_t requestor){
-  uint16_t i = 0;
-  for (i = 0; i < target.__arr_len;i++){
-    target.values[i] = rpks_annotation[i];
-  }
-}
-
-void AmuletGetSPKS(__uint8_t_array target, uint8_t requestor){
-  uint16_t i = 0;
-  for (i = 0; i < target.__arr_len;i++){
-    target.values[i] = spks_annotation[i];
-  }
-}
-#endif

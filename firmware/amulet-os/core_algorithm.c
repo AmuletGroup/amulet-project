@@ -1,11 +1,3 @@
-/* *
- *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
-
 /*
  * Eric Chen, August, 2014
  * Functions that calculate the drowsiness of an individual
@@ -22,6 +14,11 @@
 
 #include "core_algorithm.h"
 
+/**
+ * Calculate absolute value of a float.
+ * 
+ * @return absolute value of input.
+ */
 float absolute(float x)
 {
      if (x < 0)
@@ -38,7 +35,8 @@ float newton_sqrt(float x) {
 }
 
 /* 
- * Finds the average RR interval for the samples
+ * Finds the average RR interval for the samples.
+ * @return average.
  */
 float getAverage(float total_time, int numBeats){
 	return total_time/numBeats;

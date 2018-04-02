@@ -1,34 +1,65 @@
-/* *
+/*****************************************************************************
+ * Product: PELICAN crossing example for MSP-EXP430F5529LP LaunchPad
+ * Last updated for version 5.3.0
+ * Last updated on  2014-04-18
  *
- * Copyright 2016 by the Trustees of Dartmouth College and Clemson University, and
- * distributed under the terms of the "Dartmouth College Non-Exclusive Research Use
- * Source Code License Agreement" (for NON-COMMERCIAL research purposes only), as
- * detailed in a file named LICENSE.pdf within this repository.
- */
+ *                    Q u a n t u m     L e a P s
+ *                    ---------------------------
+ *                    innovating embedded systems
+ *
+ * Copyright (C) Quantum Leaps, www.state-machine.com.
+ *
+ * This program is open source software: you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Alternatively, this program may be distributed and modified under the
+ * terms of Quantum Leaps commercial licenses, which expressly supersede
+ * the GNU General Public License and are specifically designed for
+ * licensees interested in retaining the proprietary status of their code.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Contact information:
+ * Web:   www.state-machine.com
+ * Email: info@state-machine.com
+ *****************************************************************************/
 
-
+#include "bsp_setup.h" /* Board Support Package (BSP) */
+#include "inc/hw_memmap.h"
 #include "qp_port.h"
 #include <msp430fr5989.h>
-#include "bsp_setup.h"       /* Board Support Package (BSP) */
-#include "inc/hw_memmap.h"
 
-#include "driverlibHeaders.h"
-#include "stdint.h"
-#include "nrf51822.h"
-#include "util.h"
-#include "core_sensors.h"//for call back to notify button press
+#include "FatFS/diskio.h"
+#include "FatFS/diskio.h"
 #include "FatFS/ff.h"
-#include "FatFS/diskio.h"
-#include "FatFS/diskio.h"
+#include "core_sensors.h" //for call back to notify button press
+#include "driverlibHeaders.h"
+#include "nrf51822.h"
+#include "stdint.h"
+#include "util.h"
 
-#include "led_driver.h"
-#include "haptic_driver.h"
-#include "bsp_init.h"
-#include "clocks_driver.h"
+#include "ADXL362driver/ADXL362.h"
+#include "Gyro/gyro.h"
 #include "CTS/CTS_wolverine.h"
 #include "analytics.h"
-#include "ADXL362driver/ADXL362.h"
+#include "bsp_init.h"
+#include "clocks_driver.h"
+#include "haptic_driver.h"
+#include "led_driver.h"
 #include "sd_driver.h"
+
+#include "MPR121driver/MPR121.h"
+#include "MPR121driver/MPR121.c"
+#include "MPR121driver/msp430fr59xx_i2c.h"
+#include "MPR121driver/msp430fr59xx_i2c.c"
 
 //#define NDEBUG
 //#define BSP_DEBUG_IPC
@@ -44,11 +75,12 @@
 /* Local-scope objects -----------------------------------------------------*/
 
 /*--------------------------------------------------------------------------*/
-#define BSP_SMCLK   8000000UL
-#define BSP_ACLK   32768UL
+#define BSP_SMCLK 8000000UL
+#define BSP_ACLK 32768UL
 #define msp430_get_smclk_freq() 8000000UL
 #define __MSP430_HAS_EUSCI_Ax__
-//#define CAPTOUCH
+#define CAPTOUCH
+#define BATTERYLEVL
 // Uncomment to turn on Amulet watchdog timer to force reboot if
 // system locks up.
 // As of 3/18/16 you have to turn off CAPTOUCH for the watchdog timer to work.
@@ -56,40 +88,47 @@
 
 #ifdef SCRIPT_EVENTS
 // TEMPERATURE_APP
-  #define SCRIPT_PERIOD 10
-  #define SCRIPT_SIZE 1
-  #define NEXT_STARTING_TICK 0
-  #define NEXT_STARTING_POINTER 0
-  //#define SCRIPT_EVENTS_GPIO
-  uint16_t script_times[SCRIPT_SIZE] = {5};//in seconds
-  uint8_t script_pointer = 0;
-  uint16_t current_ticks = 0;
-  uint16_t script_events[SCRIPT_SIZE] = {AMULET_BUTTON_TAP_SIG};// check this in the AFT generated apps.h
-  uint8_t target_apps_ids[SCRIPT_SIZE] = {100}; // check this in the AFT generated apps.h
+#define SCRIPT_PERIOD 10
+#define SCRIPT_SIZE 1
+#define NEXT_STARTING_TICK 0
+#define NEXT_STARTING_POINTER 0
+//#define SCRIPT_EVENTS_GPIO
+uint16_t script_times[SCRIPT_SIZE] = {5}; // in seconds
+uint8_t script_pointer = 0;
+uint16_t current_ticks = 0;
+uint16_t script_events[SCRIPT_SIZE] = {
+    AMULET_BUTTON_TAP_SIG}; // check this in the AFT generated apps.h
+uint8_t target_apps_ids[SCRIPT_SIZE] = {
+    100}; // check this in the AFT generated apps.h
 
 // FALLDETECTION_APP
-  /*#define SCRIPT_PERIOD 60
-  #define SCRIPT_SIZE 3
-  #define NEXT_STARTING_TICK 0
-  #define NEXT_STARTING_POINTER 0
-  //#define SCRIPT_EVENTS_GPIO
-  uint16_t script_times[SCRIPT_SIZE] = {4,22,50};//in seconds
-  uint8_t script_pointer = 0;
-  uint16_t current_ticks = 0;
-  uint16_t script_events[SCRIPT_SIZE] = {AMULET_BUTTON_TAP_SIG,
-                                        AMULET_APPLICATIONS_Q_SIG_START_SIG+0,
-                                        AMULET_APPLICATIONS_Q_SIG_START_SIG+4
-                                        };// check this in the AFT generated apps.h
-  uint8_t target_apps_ids[SCRIPT_SIZE] = {100, 100, 100}; // check this in the AFT generated apps.h
-  */
+/*#define SCRIPT_PERIOD 60
+#define SCRIPT_SIZE 3
+#define NEXT_STARTING_TICK 0
+#define NEXT_STARTING_POINTER 0
+//#define SCRIPT_EVENTS_GPIO
+uint16_t script_times[SCRIPT_SIZE] = {4,22,50};//in seconds
+uint8_t script_pointer = 0;
+uint16_t current_ticks = 0;
+uint16_t script_events[SCRIPT_SIZE] = {AMULET_BUTTON_TAP_SIG,
+                                      AMULET_APPLICATIONS_Q_SIG_START_SIG+0,
+                                      AMULET_APPLICATIONS_Q_SIG_START_SIG+4
+                                      };// check this in the AFT generated
+apps.h
+uint8_t target_apps_ids[SCRIPT_SIZE] = {100, 100, 100}; // check this in the AFT
+generated apps.h
+*/
 #endif
 
 // The following variables are related to tasks managers
 short spiEnabled = 0;
-static unsigned char spi_rx_ready_flag=0;
+static unsigned char spi_rx_ready_flag = 0;
 uint16_t length_msg_len = 0;
 bool ipc_buffer_ready = false;
-bool ipcDataPending=false;
+bool ipcDataPending = false;
+
+uint8_t lastBatteryLevel = 100;
+uint16_t batteryCheckCount = 0;
 
 uint8_t circularstart = 0;
 uint8_t circularend = 0;
@@ -98,6 +137,7 @@ uint16_t timer_ticks = 0;
 
 uint8_t timer_sensor_type = TIMER;
 uint8_t acc_sensor_type = ACCELEROMETER;
+uint8_t gyro_sensor_type = IMU;
 
 // Variables for CTS
 uint8_t last_slider_loc = 0;
@@ -109,8 +149,13 @@ extern void sliderSignal(enum AmuletSignal sliderSig);
 int16_t acc_buffer_x[BSP_TICKS_PER_SEC];
 int16_t acc_buffer_y[BSP_TICKS_PER_SEC];
 int16_t acc_buffer_z[BSP_TICKS_PER_SEC];
-int8_t acc_ref_counter = 0;
-//int16_t acc_buffer[120];
+int8_t acc_ref_counter = 0; 
+
+int16_t gyro_buffer_x[BSP_TICKS_PER_SEC];
+int16_t gyro_buffer_y[BSP_TICKS_PER_SEC];
+int16_t gyro_buffer_z[BSP_TICKS_PER_SEC];
+int8_t gyro_ref_counter = 0;
+// int16_t acc_buffer[120];
 
 uint32_t amulet_startup_timer;
 
@@ -122,10 +167,10 @@ bool is_bluetooth_paired = false;
 #define BATT_CHECK_INTERVAL_SECONDS 60 * 10
 uint16_t secs_since_last_batt_reading = 0;
 
-//uint16_t secs_since_last_heartrate = 0;
+// uint16_t secs_since_last_heartrate = 0;
 
-//external functions declaration for buttons and timers, gp 2/14/2015
-//declared in buttons_driver.h, timer_A1.h, timer_A2.h
+// external functions declaration for buttons and timers, gp 2/14/2015
+// declared in buttons_driver.h, timer_A1.h, timer_A2.h
 extern void button_init(uint8_t);
 extern void debounce(uint8_t);
 extern void LED1init();
@@ -137,36 +182,38 @@ extern void adc_init();
 extern void enable_ADC();
 extern void clocks_init(void);
 
-
-
-
+// The following variables are used for cap touch slide detection on the snail kite
+int capLastPos = 0;
+int capUpCount = 0;
+int capDownCount = 0;
+int capSlideThreshold = 2;
+uint8_t capTouchStates[12] = {0};
 
 /*..........................................................................*/
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-#pragma vector=TIMER0_A0_VECTOR
+#pragma vector = TIMER0_A0_VECTOR
 __interrupt void timerA_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) timerA_ISR (void)
+void __attribute__((interrupt(TIMER0_A0_VECTOR))) timerA_ISR(void)
 #else
 #error Compiler not supported!
 #endif
 {
 #ifdef NDEBUG
-  //GPIO_setOutputHighOnPin(CORE_PROFILING_PORT,
+  // GPIO_setOutputHighOnPin(CORE_PROFILING_PORT,
   //          CORE_PROFILING_PIN);
-  //volatile uint8_t i = 0;
-  //for (; i < 64; i++) {
+  // volatile uint8_t i = 0;
+  // for (; i < 64; i++) {
   //}
-  //GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
+  // GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
   //          CORE_PROFILING_PIN);
   // Test 2
   // GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
   //          CORE_PROFILING_PIN);
   _bic_SR_register_on_exit(LPM3_bits);
-  #ifdef PROFLILNG
-  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-            CORE_PROFILING_PIN);
-  #endif
+#ifdef PROFLILNG
+  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
 
 #endif
   QF_TICK(&l_timerA_ISR);
@@ -174,50 +221,128 @@ void __attribute__ ((interrupt(TIMER0_A0_VECTOR))) timerA_ISR (void)
   // Timer
   amulet_startup_timer++;
 
-  //Now we no longer have Amulet Timer
-  timer_ticks = (timer_ticks>=AMULET_TICKS_PER_SEC) ? AMULET_TICKS_PER_SEC : timer_ticks + 1;
+  // Now we no longer have Amulet Timer
+  timer_ticks = (timer_ticks >= AMULET_TICKS_PER_SEC) ? AMULET_TICKS_PER_SEC
+                                                      : timer_ticks + 1;
 
-  if(acc_ref_counter > 0){
-    int16_t XValue=0, YValue=0, ZValue=0, Temperature=0;
+  if (acc_ref_counter > 0) {
+    int16_t XValue = 0, YValue = 0, ZValue = 0, Temperature = 0;
     ADXL362readXYZTData(&XValue, &YValue, &ZValue, &Temperature);
-    acc_buffer_x[timer_ticks-1] = XValue;
-    acc_buffer_y[timer_ticks-1] = YValue;
-    acc_buffer_z[timer_ticks-1] = ZValue;
+    acc_buffer_x[timer_ticks - 1] = XValue;
+    acc_buffer_y[timer_ticks - 1] = YValue;
+    acc_buffer_z[timer_ticks - 1] = ZValue;
   }
 
-  // If we got a continuous increasing or decreasing CTS sequence, then send signal to the app
-#ifdef CAPTOUCH
-  if(is_captouch_enabled()) {
-    CTS_getReading();
-    if(sliderPos[1]>last_slider_loc){
-      slider_up_count++;
-      slider_down_count=0;
-    } else if(sliderPos[1]<last_slider_loc){
-      slider_down_count++;
-      slider_up_count=0;
-    }
-    if(slider_down_count>2){
-      slider_down_count = 0;
-      sliderSig = AMULET_SLIDER_DOWN_SIG;
-      sliderSignal(sliderSig);
-    }
-    if(slider_up_count>2){
-      slider_up_count = 0;
-      sliderSig = AMULET_SLIDER_UP_SIG;
-      sliderSignal(sliderSig);
-      log_user_interaction(UI_EVENT_CAPTOUCH);
-    }
-    last_slider_loc = sliderPos[1];
+  if (gyro_ref_counter > 0) {
+    l3gd20Data gyrodata;
+    GyroReadXYZData(&gyrodata);
+    // Just pass range compensated values of the sensor
+    gyro_buffer_x[timer_ticks - 1] = gyrodata.x;
+    gyro_buffer_y[timer_ticks - 1] = gyrodata.y;
+    gyro_buffer_z[timer_ticks - 1] = gyrodata.z;
   }
-#endif
+    #ifdef BATTERYLEVL
+      batteryCheckCount++;
+      if (batteryCheckCount > 6000) {
+
+        uint8_t battery_reading = get_battery_level();
+        if (lastBatteryLevel!=battery_reading){
+          lastBatteryLevel = battery_reading;
+          sliderSignal(AMULET_BATTERY_CHANGE_SIG);
+        }
+        if (battery_reading<20){
+          sliderSignal(AMULET_LOW_BATTERY_SIG);
+
+        }
+        batteryCheckCount = 0;
+
+      }
+
+    #endif
+// If we got a continuous increasing or decreasing CTS sequence, then send
+// signal to the app
+    #ifdef CAPTOUCH
+
+        #ifdef BSP_WHITE_OWL
+            if (is_captouch_enabled()) {
+                CTS_getReading();
+                if (sliderPos[1] > last_slider_loc) {
+                    slider_up_count++;
+                    slider_down_count = 0;
+                } else if (sliderPos[1] < last_slider_loc) {
+                    slider_down_count++;
+                    slider_up_count = 0;
+                }
+                if (slider_down_count > 2) {
+                    slider_down_count = 0;
+                    sliderSig = AMULET_SLIDER_DOWN_SIG;
+                    sliderSignal(sliderSig);
+                }
+                if (slider_up_count > 2) {
+                    slider_up_count = 0;
+                    sliderSig = AMULET_SLIDER_UP_SIG;
+                    sliderSignal(sliderSig);
+                    log_user_interaction(UI_EVENT_CAPTOUCH);
+                }
+                last_slider_loc = sliderPos[1];
+            }
+        #endif
+
+        #ifdef BSP_SNAIL_KITE
+            /* 1. Read the touch states from the MPR121. States 0-7 are stored *
+             *    in touch_states[0] and 8-11 are in touch_states[1].          */
+            uint8_t touch_states[2] = {0,0};
+            MPR121_Read_Touch_States(0x5A, touch_states);
+            uint16_t touched = (touch_states[1] << 8) | touch_states[0];
+
+            /* 2. Loop over the first 12 bits of touched and check to see if *
+             *    there have been any changes in the states of the pins.     */
+            int i,j = 1;
+            for (i=0; i < 12; i++){
+                if(touched & j) {                       // Pin i is currently being touched. If this
+                    if(capTouchStates[i] == 0){         // is the first time, mark it as touched
+                        capTouchStates[i] = 1;
+                        if(i > capLastPos) {            // If the current pin is "higher" than the
+                            capUpCount++;               // last touched pin, then the user is sliding
+                            capDownCount = 0;           // up. Increment up count, reset down count, and
+                            capLastPos = i;             // break for loop
+                            break;
+                        }
+                        if(i < capLastPos) {            // If the current pin is "lower" than the
+                            capUpCount = 0;             // last touched pin, then the user is sliding
+                            capDownCount++;             // down. Increment down count, reset up count,
+                            capLastPos = i;             // and break for loop
+                            break;
+                        }
+                    }
+                } else{                                 // Pin i is not currently being touched
+                    if(capTouchStates[i] == 1){         // Make sure that it is not marked as touched
+                        capTouchStates[i] = 0;
+                    }
+                }
+                j = j << 1;                             // Move to the next pin state
+            }
+
+            /* 3. The capSlideThreshold determines how many pins need to be     *
+             *    touched in a row (either up or down) to constitute a "slide". */
+            if(capUpCount >= capSlideThreshold) {
+                capUpCount = 0;
+                sliderSignal(AMULET_SLIDER_UP_SIG);
+            }
+            if(capDownCount >= capSlideThreshold) {
+                capDownCount = 0;
+                sliderSignal(AMULET_SLIDER_DOWN_SIG);
+            }
+        #endif
+    #endif
 }
 
 /*..........................................................................*/
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-#pragma vector=UNMI_VECTOR
+#pragma vector = UNMI_VECTOR
 __interrupt void unmi_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(UNMI_VECTOR))) unmi_ISR (void)
+void __attribute__((interrupt(UNMI_VECTOR))) unmi_ISR(void)
 #else
 #error Compiler not supported!
 #endif
@@ -225,137 +350,130 @@ void __attribute__ ((interrupt(UNMI_VECTOR))) unmi_ISR (void)
   WDTCTL = (WDTPW | WDTHOLD); /* Stop WDT */
 }
 
-
 // trap isr assignation - put all unused ISR vector here
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector = PORT2_VECTOR
-__interrupt void    PORT2_ISR(void)
+__interrupt void PORT2_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(PORT2_VECTOR))) PORT2_ISR (void)
+void __attribute__((interrupt(PORT2_VECTOR))) PORT2_ISR(void)
 #else
 #error Compiler not supported!
 #endif
 {
 
   _bic_SR_register_on_exit(LPM3_bits);
-  #ifdef PROFLILNG
-  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-            CORE_PROFILING_PIN);
-  #endif
+#ifdef PROFLILNG
+  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
 }
 
 // trap isr assignation - put all unused ISR vector here
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector = WDT_VECTOR
-__interrupt void    WDT_ISR(void)
+__interrupt void WDT_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(WDT_VECTOR))) WDT_ISR (void)
+void __attribute__((interrupt(WDT_VECTOR))) WDT_ISR(void)
 #else
 #error Compiler not supported!
 #endif
 {
   _bic_SR_register_on_exit(LPM3_bits);
-  #ifdef PROFLILNG
-  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-            CORE_PROFILING_PIN);
-  #endif
+#ifdef PROFLILNG
+  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
 }
 
 // trap isr assignation - put all unused ISR vector here
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector = RTC_VECTOR
-__interrupt void    RTC_ISR(void)
+__interrupt void RTC_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(RTC_VECTOR))) RTC_ISR (void)
+void __attribute__((interrupt(RTC_VECTOR))) RTC_ISR(void)
 #else
 #error Compiler not supported!
 #endif
 {
   switch (__even_in_range(RTCIV, RTC_RTCOFIFG)) {
-  case RTCIV_NONE:      break;
-  case RTCIV_RTCRDYIFG: break;
+  case RTCIV_NONE:
+    break;
+  case RTCIV_RTCRDYIFG:
+    break;
   case RTCIV_RTCTEVIFG:
     __bic_SR_register_on_exit(LPM4_bits);
-    #ifdef PROFLILNG
-    GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-              CORE_PROFILING_PIN);
-    #endif
+#ifdef PROFLILNG
+    GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
     __no_operation();
     break;
-  case RTCIV_RTCAIFG:  break;             // RTCAIFG
-  case RTCIV_RT0PSIFG: break;             // RT0PSIFG
-  case RTCIV_RT1PSIFG:                    // RT1PSIFG
-      __bic_SR_register_on_exit(LPM3_bits);
-      #ifdef PROFLILNG
-      GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-                CORE_PROFILING_PIN);
-      #endif
-      __no_operation();
+  case RTCIV_RTCAIFG:
+    break; // RTCAIFG
+  case RTCIV_RT0PSIFG:
+    break;             // RT0PSIFG
+  case RTCIV_RT1PSIFG: // RT1PSIFG
+    __bic_SR_register_on_exit(LPM3_bits);
+#ifdef PROFLILNG
+    GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
+    __no_operation();
     break;
-  case RTCIV_RTCOFIFG: break;             // RTCOFIFG
-  default: break;
+  case RTCIV_RTCOFIFG:
+    break; // RTCOFIFG
+  default:
+    break;
   }
-
 }
-
 
 // trap isr assignation - put all unused ISR vector here
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
 #pragma vector = USCI_B0_VECTOR
 __interrupt void USCI_B0_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(USCI_B0_VECTOR))) USCI_B0_ISR (void)
+void __attribute__((interrupt(USCI_B0_VECTOR))) USCI_B0_ISR(void)
 #else
 #error Compiler not supported!
 #endif
 {
   _bic_SR_register_on_exit(LPM3_bits);
-  #ifdef PROFLILNG
-  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-            CORE_PROFILING_PIN);
-  #endif
+#ifdef PROFLILNG
+  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
 }
 
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-#pragma vector=PORT1_VECTOR
-__interrupt void PORT1_ISR(void)
+#pragma vector = PORT4_VECTOR
+__interrupt void PORT4_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(PORT1_VECTOR))) PORT1_ISR (void)
+void __attribute__((interrupt(PORT4_VECTOR))) PORT4_ISR(void)
 #else
 #error Compiler not supported!
 #endif
 {
   _bic_SR_register_on_exit(LPM3_bits);
-  #ifdef PROFLILNG
-  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-            CORE_PROFILING_PIN);
-  #endif
-
+#ifdef PROFLILNG
+  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
 }
 
-//added by Gunnar on 4/1/2015 for use by the haptic buzzer
+// added by Gunnar on 4/1/2015 for use by the haptic buzzer
 #if defined(__TI_COMPILER_VERSION__) || defined(__IAR_SYSTEMS_ICC__)
-#pragma vector=TIMER3_A1_VECTOR
+#pragma vector = TIMER3_A1_VECTOR
 __interrupt void TimerA3_ISR(void)
 #elif defined(__GNUC__)
-void __attribute__ ((interrupt(TIMER3_A1_VECTOR))) TimerA3_ISR (void)
+void __attribute__((interrupt(TIMER3_A1_VECTOR))) TimerA3_ISR(void)
 #else
 #error Compiler not supported!
 #endif
 {
   _bic_SR_register_on_exit(LPM3_bits);
-  #ifdef PROFLILNG
-  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-            CORE_PROFILING_PIN);
-  #endif
+#ifdef PROFLILNG
+  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
 
-  if (TA3IV & TA3IV_TACCR1){
+  if (TA3IV & TA3IV_TACCR1) {
     haptic();
   }
 
-}//end interrupt
-
-
+} // end interrupt
 
 void white_owl_initialize_pins() {
   // Init all pins to a known state
@@ -415,8 +533,8 @@ void white_owl_initialize_pins() {
   SPI_CLK_OUT &= ~SPI_CLK;
 
   // Display deassert
-  //PJDIR |= BIT7;
-  //PJOUT &= ~BIT7;
+  // PJDIR |= BIT7;
+  // PJOUT &= ~BIT7;
 
   // Delay to settle
   __delay_cycles(1000000);
@@ -453,7 +571,7 @@ void white_owl_initialize_pins() {
   ACCEL_CS_PxDIR |= ACCEL_CS_BITx;
   ACCEL_CS_PxOUT |= ACCEL_CS_BITx;
 
-   // Turn off Mic
+  // Turn off Mic
   AUDIO_ADC_PXDIR |= AUDIO_ADC_INPUT_BITX;
   AUDIO_ADC_PXOUT &= ~AUDIO_ADC_INPUT_BITX;
 
@@ -478,11 +596,11 @@ void white_owl_initialize_pins() {
 void snail_kite_initialize_pins() {
   // Gyro power on
   P1DIR |= BIT4;
-  P1OUT |= BIT4; 
+  P1OUT |= BIT4;
 
-    // Gyro CS high
+  // Gyro CS high
   P2DIR |= BIT5;
-  P2OUT |= BIT5;   
+  P2OUT |= BIT5;
 
   PJSEL0 &= ~(BIT7 | BIT6);
   PJSEL1 &= ~(BIT7 | BIT6);
@@ -500,7 +618,7 @@ void snail_kite_initialize_pins() {
   // XL CS high
   PJDIR |= BIT6;
   PJOUT |= BIT6;
-  
+
   // Turn SD off
   SD_POWER_DIR |= SD_POWER;
   SD_POWER_OUT |= SD_POWER;
@@ -514,9 +632,9 @@ void snail_kite_initialize_pins() {
  */
 void BSP_init(void) {
   WDTCTL = (WDTPW | WDTHOLD); /* stop the watchdog timer */
-  
-  // This is platform hardware dependant, and is included by bsp_init.h
-#ifdef BSP_SNAIL_KITE  
+
+// This is platform hardware dependant, and is included by bsp_init.h
+#ifdef BSP_SNAIL_KITE
   snail_kite_initialize_pins();
 #endif
 #ifdef BSP_WHITE_OWL
@@ -547,13 +665,13 @@ void BSP_init(void) {
 // up
 #ifndef BSP_DEV
   adc_init();
-  enable_ADC();  // call this function to power up the ADC and thumbwheel, see
-                 // ADC_driver.h for details
+  enable_ADC(); // call this function to power up the ADC and thumbwheel, see
+                // ADC_driver.h for details
 #endif
 
   TA0CCR0 = (unsigned)((BSP_ACLK + BSP_TICKS_PER_SEC / 2) / BSP_TICKS_PER_SEC);
   TA0CTL = (TASSEL_1 | MC_1 |
-            TACLR);  // set clock source to ACLK, upmode and reset clock divider
+            TACLR); // set clock source to ACLK, upmode and reset clock divider
   TA0CTL &= ~TAIFG;
   __no_operation();
 
@@ -588,8 +706,6 @@ void BSP_init(void) {
   // Initiliaze SD card power pin and SPI pins
   SDinit();
 
-
-
   // Init the display, set the default font
   // DO NOT DO ANYTHING TO DISPLAY TILL BUFFER IS SET IN CoreUIInit
   // Display has a pointer to upcomgin app displaybuffer address
@@ -597,15 +713,32 @@ void BSP_init(void) {
   setFont(SourceSansProBold7);
 
   // int16_t XValue, YValue, ZValue, Temperature;
-  ADXL362begin(10);       // Setup SPI protocol, issue device soft reset
-  ADXL362beginMeasure();  // Switch ADXL362 to measure mode
+  ADXL362begin(10);      // Setup SPI protocol, issue device soft reset
+  ADXL362beginMeasure(); // Switch ADXL362 to measure mode
+
+  // Gyro, init into power down mode 
+  // Same bus as XL so SPI is already init
+  GyroBegin();
 
 // Init CapTouch Sliders
 #ifdef CAPTOUCH
-  TI_CAPT_Init_Baseline(&slider1);
-  TI_CAPT_Update_Baseline(&slider1, 10);
-  GPIO_setAsInputPin(GPIO_PORT_P1, GPIO_PIN0);
-  GPIO_setAsInputPin(GPIO_PORT_P9, GPIO_PIN0 | GPIO_PIN1);
+    #ifdef BSP_WHITE_OWL
+        TI_CAPT_Init_Baseline(&slider1);
+        TI_CAPT_Update_Baseline(&slider1, 10);
+        GPIO_setAsInputPin(GPIO_PORT_P1, GPIO_PIN0);
+        GPIO_setAsInputPin(GPIO_PORT_P9, GPIO_PIN0 | GPIO_PIN1);
+    #endif
+
+    #ifdef BSP_SNAIL_KITE
+        P2DIR &= ~BIT4;                                 // Configure P2.4 as input for MPR IRQ pin
+        P2OUT |= BIT4;                                  // Configure pull-up resistor on P2.4
+        P2REN |= BIT4;                                  // Enable pull-up res on P2.4
+        P1SEL0 |= BIT6 | BIT7;                          // Configure I2C pins P1.6 = SDA P1.7 = SCL
+        P1SEL1 &= ~(BIT6 | BIT7);                       // Configure I2C pins P1.6 = SDA P1.7 = SCL
+        I2C_Init(UCSSEL__SMCLK, 64);
+
+        MPR121_Init(0x5A);
+    #endif
 #endif
 
 #ifdef PROFLILNG
@@ -653,40 +786,36 @@ void BSP_init(void) {
 }
 
 /*..........................................................................*/
-void BSP_terminate(int16_t result) {
-  (void)result;
-}
+void BSP_terminate(int16_t result) { (void)result; }
 
 /*..........................................................................*/
-void QF_onStartup(void) {
-  TA0CCTL0 = CCIE; /* enable Timer0 interrupt */
-}
+void QF_onStartup(void) { TA0CCTL0 = CCIE; /* enable Timer0 interrupt */ }
 
 /*..........................................................................*/
-void QF_onCleanup(void) {
-}
+void QF_onCleanup(void) {}
 
 /*..........................................................................*/
-uint8_t hr_message_buff_bs[9]  __attribute__ ((section (".noinit")));
+uint8_t hr_message_buff_bs[22] __attribute__((section(".noinit")));
 uint8_t ble_check_seconds;
 char count_str[10];
+//uint8_t toggle=0;
+
 void QF_onIdle(void) {
 #ifdef NDEBUG
   QF_INT_DISABLE();
-  // All the task here can be captured
-  #ifdef PROFLILNG
-  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT,
-          CORE_PROFILING_PIN);
-  #endif
+// All the task here can be captured
+#ifdef PROFLILNG
+  GPIO_setOutputLowOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
 
-  // Clear the watchdog counter to prevent a reboot.
-  // To test the watchdog comment out this line and the Amulet
-  // should reboot once a second (there is a one second delay at the
-  // start of main()).
+// Clear the watchdog counter to prevent a reboot.
+// To test the watchdog comment out this line and the Amulet
+// should reboot once a second (there is a one second delay at the
+// start of main()).
 
-  #ifdef AMULET_WATCHDOG
+#ifdef AMULET_WATCHDOG
   WDTCTL = WDTPW + WDTCNTCL; // WDT CNT is cleared and counting from 0
-  #endif
+#endif
 
   // enable interrupts, go into lpm, will come back after timer elapses
 
@@ -697,33 +826,164 @@ void QF_onIdle(void) {
   // New IPC, any byte just asks for recent heartrate data (rx three bytes)
   // Using polling for now since dont have an interrupt pin.
   // Only check once a second
-  if(is_ble_enabled() && timer_ticks >= AMULET_TICKS_PER_SEC) {
+  if (is_ble_enabled() && timer_ticks >= AMULET_TICKS_PER_SEC) {
     ble_check_seconds++;
-    if(ble_check_seconds > 1) {
-      // Read over SPI the HR byte, and the RR-interval (2 bytes)
+    if (ble_check_seconds >= 1) {
+      uint8_t it;
+      uint8_t length=0;
+
+// This sets the SPI buffer size for received data
+#define SPI_RX_BUF_SIZE 10
+      uint8_t packet[SPI_RX_BUF_SIZE];
+// This sets the size for buffer for parsed HRM data.  The data will
+// consist of uint16_t's with HR first, then zero or more RRI values.
+#define HRM_MAX_DATA_SIZE 10
+      uint16_t hrm_data[HRM_MAX_DATA_SIZE];
+
+      // RON: Right now the only thing that comes via IPC from the
+      // RON: radio is HRM packets.  Soon we'll have to handle other
+      // RON: sensor types though.  So will need to use the CS line,
+      // RON: and double buffering on the radio, and add # packets,
+      // RON: and sensor type to be able to handle multiple packets
+      // RON: being transferred.  This code will then parse multiple
+      // RON: types of radio packets.
+
+      // Read over SPI the HR and RR-interval data.
+      // The current packet forwarding format is:
+      // uint8_t length
+      // uint8_t data[length]
+
+      // Turn on the chip select line to the radio.
+      // This lets the radio know it should not write data into
+      // the SPI buffer now because a transfer is about to take
+      // place.
+
       nrf51822_select();
-      uint8_t hr_msbyte = nrf51822_spi_transfer(255);
-      uint8_t hr_lsbyte = nrf51822_spi_transfer(255);
-      uint8_t rr_msbyte = nrf51822_spi_transfer(255);
-      uint8_t rr_lsbyte =  nrf51822_spi_transfer(255);
+
+      // The first byte will be the length of the HRM packet to follow.
+      // SPI is bidirectional so we're sending a 255 back.  Eventually
+      // we'll send a command instead telling the radio to send data.
+
+//#if 0
+      //if(toggle == 0)
+      //{
+      //   toggle = 1;
+      //   turn_LED1_On();
+      //   turn_LED2_On();
+      //} else
+      //{
+      //   toggle = 0;
+      //   turn_LED1_Off();
+      //   turn_LED2_Off();
+      //}
+      length = nrf51822_spi_transfer(255);
+      if((length > 0) && (length < SPI_RX_BUF_SIZE)) // Sanity check
+      {
+         // Read the rest of the HRM packet
+
+         for(it=0; it<length; it++)
+         {
+            // Currently we're sending 255's back to the radio at the same
+            // time as we're reading data since SPI is bidirectional.
+
+            packet[it] = nrf51822_spi_transfer(255);
+         }
+      }
+
+      // Turn off chip select line to the radio.
+
       nrf51822_deselect();
-      uint16_t hr_val = (hr_msbyte << 8) | hr_lsbyte;
-      // Sensor type
+
+      // Parse the HRM packet
+      // The format of the data returned by the parser is 10 uint16_t numbers:
+      // uint16_t HR
+      // uint16_t energyExpended
+      // uint16_t RRI[7]
+      // uint16_t sensorContact
+//#if 0
+      length = parseHeartRateAndRRI(packet, length, hrm_data);
+
+      // length is the number of RRI, rest of fields are fixed.
+      // hrm_data[0] is always HR
+      // hrm_data[1] is always energyExpended
+      // # RRI is variable, unused slots will be zero
+      // hrm_data[9] is always sensorContact
+
+      // Assemble the HRM data into a message to the apps that have
+      // subscribed to the data.
+
+      // How many RRI values might there be per HR measurement?
+      // Assume an extreme HR of 300 bpm (user soon to be dead!)
+      // The reporting rate from the HRM is once per second.  So that's
+      // (300bpm/(60s/m)) * 1s = 5 beats
+      // So there can be up to four RRI intervals per message.  At a
+      // normal bpm of around 60bpm there is usually only 1 RRI, sometimes
+      // two.  But when running or excited there may be 2 or 3 RRI.
+
+      // RON: Need to increase the size of hr_message_buff_bs to handle
+      // RON: more RRI values.  Say up to 3 though I've only seen up to
+      // RON: two with the Polar.
+      // RON: What to do with the other data from HRM?  Energy expended and
+      // RON: sensor contact.  I'm changing the whole data format so should
+      // RON: leave the first part the same for now so I don't break the apps
+      // RON: which would make testing easier, or do I break it and add data
+      // RON: in format parser returns it, or reformat it, or reformat it in
+      // RON: the parser?  The apps have to assemble uint16_t's from bytes?
+      // RON: Or is do they see 16bit numbers?
+      // RON: For now I'm trying not to break the apps.
+
+      // Apps will see HRM event data in this format:
+      // uint8_t HEARTRATE event (do apps even see this?  Probably just event type)
+      // uint16_t HR
+      // uint16_t RRI[7]
+      // uint16_t energyExpended
+      // uint16_t sensorContact
+      //
+      // Previously it was just HR then one RRI, so apps that expect that
+      // will still work.  RRI can be zero.
+
+      // Add sensor type
       hr_message_buff_bs[0] = HEARTRATE;
-      // Data
-      hr_message_buff_bs[1] = hr_lsbyte;
-      hr_message_buff_bs[2] = hr_msbyte;
-      hr_message_buff_bs[3] = rr_lsbyte;
-      hr_message_buff_bs[4] = rr_msbyte;
-      NotifyApp(hr_message_buff_bs, 9);
 
+      // Add the data, we are packing uint16_t's into uint8_t's here.
+      // I'm keeping the format identical to the old format for the first
+      // 5 bytes so apps don't have to change, but can use the extra data
+      // if they want to.
 
-      // BLE analytics
-      if(hr_val == 0 && is_bluetooth_paired) {
+      // Add the HR
+      hr_message_buff_bs[1] = (uint8_t)(hrm_data[0] & 0x00FF);
+      hr_message_buff_bs[2] = (uint8_t)((hrm_data[0] & 0xFF00) >> 8);
+
+      // Add the RRI's.  hrm_data[1] is energyExpended so start at index 2.
+      for(it=3; it<=17; it=it+2) // Copy 14 bytes into 7 uint16_t's.
+      {
+         hr_message_buff_bs[it] = (uint8_t)(hrm_data[2+((it-2)/2)] & 0x00FF);
+         hr_message_buff_bs[it+1] = (uint8_t)((hrm_data[2+((it-2)/2)] & 0xFF00) >> 8);
+      }
+
+      // Add the expendedEnergy field
+      hr_message_buff_bs[18] = (uint8_t)(hrm_data[1] & 0x00FF);
+      hr_message_buff_bs[19] = (uint8_t)((hrm_data[1] & 0xFF00) >> 8);
+
+      // Add the sensorContact field
+      hr_message_buff_bs[20] = (uint8_t)(hrm_data[9] & 0x00FF);
+      hr_message_buff_bs[21] = (uint8_t)((hrm_data[9] & 0xFF00) >> 8);
+
+      // Send the data to the apps as an event.
+
+      NotifyApp(hr_message_buff_bs, 22);
+//#endif
+      // BLE analytics, if getting data then we must have a connection.
+      // If not getting data then the connection was dropped.  So we can
+      // infer the connection state from the data, however this will soon
+      // be replaced with explicit CONNECT and DISCONNECT messages sent
+      // from the radio.  For now, this still works.
+
+      if (hrm_data[0] == 0 && is_bluetooth_paired) {
         log_ble_event(BLE_EVENT_DISCONNECT);
         is_bluetooth_paired = false;
       }
-      if(hr_val != 0 && !is_bluetooth_paired) {
+      if (hrm_data[0] != 0 && !is_bluetooth_paired) {
         log_ble_event(BLE_EVENT_CONNECT);
         is_bluetooth_paired = true;
       }
@@ -734,56 +994,59 @@ void QF_onIdle(void) {
   // Battery voltage check
   if (timer_ticks >= AMULET_TICKS_PER_SEC) {
     secs_since_last_batt_reading++;
-    if(secs_since_last_batt_reading > BATT_CHECK_INTERVAL_SECONDS) {
+    if (secs_since_last_batt_reading > BATT_CHECK_INTERVAL_SECONDS) {
       uint16_t batt_voltage_adc = take_battery_reading();
       log_batt_voltage(batt_voltage_adc);
       secs_since_last_batt_reading = 0;
     }
   }
 
-  //if(P5IN & BIT0){
+  // if(P5IN & BIT0){
   //  ADXL362readFIFO(acc_buffer, 120);
   //  NotifyApp(&acc_sensor_type, 30);
-    //P5IN &= ~BIT0;
+  // P5IN &= ~BIT0;
   //}
 
   if (timer_ticks >= AMULET_TICKS_PER_SEC) {
-    #ifdef SCRIPT_EVENTS
+#ifdef SCRIPT_EVENTS
 
-      if(script_pointer<SCRIPT_SIZE && script_times[script_pointer]==current_ticks){
-        AmuletEvt *bEvt = Q_NEW(AmuletEvt, script_events[script_pointer]);
-        QACTIVE_POST(getAppActiveObject(GlobalAppQueueHead, target_apps_ids[script_pointer]), &bEvt->super, NULL);
-        script_pointer++;
-        #ifdef SCRIPT_EVENTS_GPIO
-          GPIO_setOutputHighOnPin(GPIO_PORT_P2,
-                  GPIO_PIN3);
-          volatile uint8_t ii = 0;
-          for (; ii < 64; ii++) {
-          }
-          GPIO_setOutputLowOnPin(GPIO_PORT_P2,
-                  GPIO_PIN3);
-        #endif
+    if (script_pointer < SCRIPT_SIZE &&
+        script_times[script_pointer] == current_ticks) {
+      AmuletEvt *bEvt = Q_NEW(AmuletEvt, script_events[script_pointer]);
+      QACTIVE_POST(getAppActiveObject(GlobalAppQueueHead,
+                                      target_apps_ids[script_pointer]),
+                   &bEvt->super, NULL);
+      script_pointer++;
+#ifdef SCRIPT_EVENTS_GPIO
+      GPIO_setOutputHighOnPin(GPIO_PORT_P2, GPIO_PIN3);
+      volatile uint8_t ii = 0;
+      for (; ii < 64; ii++) {
       }
-      current_ticks = current_ticks + 1;
-      if(current_ticks>SCRIPT_PERIOD){
-        current_ticks = NEXT_STARTING_TICK;
-        script_pointer = NEXT_STARTING_POINTER;
-      }
+      GPIO_setOutputLowOnPin(GPIO_PORT_P2, GPIO_PIN3);
+#endif
+    }
+    current_ticks = current_ticks + 1;
+    if (current_ticks > SCRIPT_PERIOD) {
+      current_ticks = NEXT_STARTING_TICK;
+      script_pointer = NEXT_STARTING_POINTER;
+    }
 
-    #endif
+#endif
     NotifyApp(&timer_sensor_type, 0);
-    //ADXL362readFIFO(acc_buffer, 120);
-    if(acc_ref_counter > 0){
+    // ADXL362readFIFO(acc_buffer, 120);
+    if (acc_ref_counter > 0) {
       NotifyApp(&acc_sensor_type, 20);
     }
-    //NotifyApp(&acc_sensor_type, 0);
+    if (gyro_ref_counter > 0) {
+      NotifyApp(&gyro_sensor_type, 20);
+    }
+    // NotifyApp(&acc_sensor_type, 0);
     timer_ticks = 0;
   }
 
-  #ifdef PROFLILNG
-  GPIO_setOutputHighOnPin(CORE_PROFILING_PORT,
-            CORE_PROFILING_PIN);
-  #endif
+#ifdef PROFLILNG
+  GPIO_setOutputHighOnPin(CORE_PROFILING_PORT, CORE_PROFILING_PIN);
+#endif
 
   QF_INT_ENABLE();
   __bis_SR_register(LPM3_bits);
@@ -795,11 +1058,10 @@ void QF_onIdle(void) {
 }
 
 /*..........................................................................*/
-void Q_onAssert(char const Q_ROM * const file, int line) {
+void Q_onAssert(char const Q_ROM *const file, int line) {
   (void)file;       /* avoid compiler warning */
   (void)line;       /* avoid compiler warning */
   QF_INT_DISABLE(); /* make sure that interrupts are locked */
-
 }
 
 /*****************************************************************************
