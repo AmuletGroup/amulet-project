@@ -5,6 +5,7 @@ If you do not already have the Amulet hardware, or have not yet set it up, pleas
 #### Table of Contents
 
 - [Setup an Amulet Build Environment on Mac OSX](#setup-an-amulet-build-environment-on-mac-osx)
+- [Setup an Amulet Build Environment on Linux](#setup-an-amulet-build-environment-on-linux)
 - [Setup an Amulet Firmware Toolchain Config File](#setup-an-amulet-firmware-toolchain-config-file)
 - [Program an Amulet Device](#program-an-amulet-device)
 - [Troubleshooting](#troubleshooting)
@@ -12,57 +13,28 @@ If you do not already have the Amulet hardware, or have not yet set it up, pleas
 
 Setup an Amulet Build Environment on Mac OSX
 ===
-1. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
+**NOTE: To be able to do this you may need to disable the System Integrity Protection (SIP). This can be done by booting into recovery mode (⌘ + R on boot) and accessing the Terminal (Utilities > Terminal). To disable type the command `csrutil disable` followed by reboot to restart your machine.**
+
+1. [Download and install GCC compiler and tools using the installer for Mac OSX.](http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/index_FDS.html)
+
+2. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
 
 		git clone --recursive https://gitlab.cs.dartmouth.edu/amulet/amulet-dev.git
 
-2. Download and install Homebrew (if not already installed):
+3. Run `buildscript-mac` to setup your development environment.
 
-		ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 
-3. Now install the dependancies for mspdebug using brew:
+Setup an Amulet Build Environment on Linux
+===
+1. [Download the GCC compiler and tools for Linux.](http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/index_FDS.html)
 
-		brew install libusb libusb-compat libelf
+2. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
 
-4. [Download and install GCC compiler and tools using the installer for Mac OSX.](http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/3_05_00_00/index_FDS.html)
-	
-		http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/3_05_00_00/index_FDS.html
+		git clone --recursive https://gitlab.cs.dartmouth.edu/amulet/amulet-dev.git
 
-5. Download (using git) the mspdebug source code for Mac OSX from buffet.cs.clemson.edu, go into the directory, and build the binary:
+3. Run `buildscript-linux` to setup your development environment.
 
-		git clone anonymous@buffet.cs.clemson.edu:jhester/mspdebug-osx
-		cd mspdebug-osx
-		make
 
-6. Install the binary, you can put it anywhere in your path, this is a suggestion, sudo at your own risk:
-
-		sudo cp mspdebug /usr/bin/
-
-7. Copy tilib to the bin for mspdebug, and add the other msp430 tools to your path. It is recommended that you place the export command in your ``.bash_profile`` or ``.zshrc`` file. If you are having trouble with the export command when using El Capitan, try disabling the System Integrity Proection (SIP) mechanism. Or, at your own risk, you could copy all of ``ti/gcc/bin`` to your ``/usr/bin`` directory.
-
-		sudo cp ~/ti/gcc/bin/libmsp430.dylib /usr/bin/
-		export PATH="$PATH:~/ti/gcc/bin"
-
-8. Test an installation by running `mspdebug tilib` which should show this output:
-
-		MSPDebug version 0.23 - debugging tool for MSP430 MCUs
-		Copyright (C) 2009-2015 Daniel Beer <dlbeer@gmail.com>
-		Modified by Josiah Hester <jhester@clemson.edu>
-		This is free software; see the source for copying conditions.  There is NO
-		warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-		Chip info database from MSP430.dll v3.3.1.4 Copyright (C) 2013 TI, Inc.
-
-9. Download and install the QM and QMC apps from sourceforge, these allow you to edit QM files, and compile them into C source code. Install them both in /Applications/ on your Mac. 
-	
-		http://sourceforge.net/projects/qpc/files/QM/3.3.0/
-		qm_3.3.0-mac64.dmg
-		qmc_3.3.0-mac64.dmg
-
-10. Finally, navigate to ``~/path_to_amulet-dev/amulet-dev/firmware/bsl/lib-qpc/ports/msp430/vanilla/ccs-mspx``, and update lines 53, 54, and 65 (shown below) with YOUR username. Then, run ``make`` to build ``~/path_to_amulet-dev/amulet-dev/firmware/bsl/lib-qpc/ports/msp430/vanilla/ccs-mspx/dbg/libqp.a``, which will be used during the firmware compilation process.
-
-		CC  = /Users/taylorhardin/ti/gcc/bin/msp430-elf-gcc
-		LIB = /Users/taylorhardin/ti/gcc/bin/msp430-elf-ar
-		CCINC = -I$(QP_PRTDIR) -I$(QP_INCDIR) -I/Users/taylorhardin/ti/gcc/include/
 
 Setup an Amulet Firmware Toolchain Config File
 ====
@@ -89,7 +61,10 @@ The following code is an example of an Amulet Firmware Toolchain (AFT) .config f
 	    # qmc_path is the path of the qmc executable
 	    qmc_path: /Applications/qmc.app/Contents/MacOS 					# mac build environment
 	    # qmc_path: /home/vagrant/qm/bin/ 										# vagrant default build environment
-
+	    # qmc_exe is the path to the actual executable, if defined, overrides qmc_path
+	    # this is most useful for ubuntu/wine or windows dev environments
+	    qmc_exe: wine ~/.wine/drive_c/qp/qm/bin/qmc.exe
+    
 	    #
 	    # Build Configuration.
 	    #
@@ -112,7 +87,7 @@ The following code is an example of an Amulet Firmware Toolchain (AFT) .config f
 
 	        # if resource-profiling is true, the -r flag is set and resource usage/energecy consumption information is produced
 	        resource_profiling: true
-		
+
 	    compiler: gcc
 	    gcc_root: ~/ti/gcc/bin
 
@@ -126,12 +101,12 @@ Program an Amulet Device
 
 3. If you already compiled the build system, then you can use the following command inside of the ``amulet-dev/firmware/aft`` folder to compile your firmware image. If, for whatever reason, you want to re-compile the build system, then use the above command instead. Again, ``--verbose`` is optional.
 
-		./aft --all --verbose Path_To_Your_Config_File/[your_config_file].config 
+		./aft --all --verbose Path_To_Your_Config_File/[your_config_file].config
 
 4. Connect your Amulet to the computer using the [TagConnect JTAG Dongle](http://www.tag-connect.com/what-is-tag-connect) connected to a programmer; this programmer can either be a MSP430FET, or a MSP430FRX9X9 launchpad. If you are using a launchpad, the picture below shows how to hook up the TagConnect [SPI-BI-WIRE connector](documentation/media/tag-connect-spi-bi-wire.jpg) and [POGO PIN wire](documentation/media/tag-connect-pogo-wire.jpg) to a launchpad.
 
 	<div>
-		<img style="float: left; margin-right: 1%; margin-bottom: 0.5em;" src="media/launchpad-hookup.jpg" height="250px" alt="launchpad connections"/>
+		<img style="float: left; margin-right: 1%; margin-bottom: 0.5em;" src="documentation/media/launchpad-hookup.jpg" height="250px" alt="launchpad connections"/>
 		<p style="clear: both;">
 	</div>  
 
@@ -145,11 +120,11 @@ You can see an in depth explanation of how the aft works and it's flag options [
 
 ## Coding Style
 
-You should write comment with [doxygen](http://www.stack.nl/~dimitri/doxygen/) style. 
+You should write comment with [doxygen](http://www.stack.nl/~dimitri/doxygen/) style.
 Generally, all Amulet API should start with Amulet prefix.
 All middle layer API between Amulet API and BSP(board support) should start with the Core prefix.
 Include headers in c file instead of h file.
-It is recommended to use clang format for all the C code (Both Sublime and Atom have clang formatter plugin) 
+It is recommended to use clang format for all the C code (Both Sublime and Atom have clang formatter plugin)
 
 **NOTE:** *We are using the Doxygen formatting style for generating documentation from comments in our source code. Please refer to the [Doxygen](http://www.stack.nl/~dimitri/doxygen/manual/docblocks.html) documentation for details on how to format comments.*
 
@@ -165,7 +140,7 @@ UART debug has been removed from this document as UART no longer exist in our cu
 
 If you have trouble going into gdb with ./aft -d script, you can try to manually start debugging session with command in the `src/aft/tools.gdb.cmd`
 
-Inevitably you will encounter issues while developing different aspects of the amulet system, be it with application development, amulet-os development, BSP development, AFT development, or something else. This page exists to capture information about some known issues and may help you resolve a problem you have. 
+Inevitably you will encounter issues while developing different aspects of the amulet system, be it with application development, amulet-os development, BSP development, AFT development, or something else. This page exists to capture information about some known issues and may help you resolve a problem you have.
 
 ## Cannot merge apps into a single file
 
@@ -177,10 +152,10 @@ SUCCESS:: App built successfully
 Error...Step failed. Exiting!
 ```
 
-It may be that the location of QM tool is not correct. The `do-aft` script assumes that you have QM installed and specifies a variable called `qpc_root` where you are supposed to specify the location of the `qmc` executable (you should have set this while you were following the "getting started" instructions). 
+It may be that the location of QM tool is not correct. The `aft` script assumes that you have QM installed and specifies a variable called `qpc_root` where you are supposed to specify the location of the `qmc` executable (you should have set this while you were following the "getting started" instructions).
 
 ## One of the core state machine stop working
-The queue(s) for the state machine can fill up quickly if you carelessly use them (ex. if you create an event but do not use it). The best practice is to create an event right before you are about to post it. 
+The queue(s) for the state machine can fill up quickly if you carelessly use them (ex. if you create an event but do not use it). The best practice is to create an event right before you are about to post it.
 
 ```
 AmuletSensorsEvt *timeReqEvt;
