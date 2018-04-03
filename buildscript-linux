@@ -1,7 +1,5 @@
 #!/bin/bash
 
-usr=amuletuser
-
 if [ ! -d ~/ti ]; then
   echo "running update + upgrade ...."
   sudo apt-get -qq update
@@ -16,11 +14,12 @@ if [ ! -d ~/ti ]; then
   cd ~/Downloads
   chmod +x msp430-gcc-full-linux-x64-installer-5.1.2.0.run
   ./msp430-gcc-full-linux-x64-installer-5.1.2.0.run
-  export PATH=$PATH:/home/$usr/ti/gcc/bin
+  echo PATH=\"$PATH:/home/$USER/ti/gcc/bin\" >> ~/.profile
+  source ~/.profile
 fi
 if [ ! -d ~/mspdebug ]; then
   echo "installing mspdebug...."
-  cd /home/$usr
+  cd /home/$USER
   sudo mkdir -p mspdebug
   cd Downloads
   sudo cp MSP430_DLL_Developer_Package_Rev_3_12_0_004.zip ../mspdebug
@@ -28,7 +27,7 @@ if [ ! -d ~/mspdebug ]; then
   sudo unzip MSP430_DLL_Developer_Package_Rev_3_12_0_004.zip
   sudo mv libmsp430.so libmsp430_32.so
   sudo mv libmsp430_64.so libmsp430.so
-  export LD_LIBRARY_PATH=/home/$usr/mspdebug
+  export LD_LIBRARY_PATH=/home/$USER/mspdebug
 fi
 
 if [ ! -d ~/mspdebug/mspdebug ]; then
@@ -64,6 +63,7 @@ fi
 
 echo "installing qm"
 sudo wget -nc https://sourceforge.net/projects/qpc/files/QM/3.3.0/qm_3.3.0-win64.exe/download
-cp download ~/.wine/drive_c/users/$usr/Downloads/download.exe
-wine ~/.wine/drive_c/users/$usr/Downloads/download.exe
+cp download ~/.wine/drive_c/users/$USER/Downloads/download.exe
+wine ~/.wine/drive_c/users/$USER/Downloads/download.exe
 echo "Welcome to amulet!"
+echo "Please set qmc_exe in amulet config file to " /home/$USER/.wine/drive_c/bin/qmc.exe

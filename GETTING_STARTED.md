@@ -19,7 +19,7 @@ Setup an Amulet Build Environment on Mac OSX
 
 2. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
 
-		git clone --recursive https://gitlab.cs.dartmouth.edu/amulet/amulet-dev.git
+		git clone --recursive https://github.com/AmuletGroup/amulet-project.git
 
 3. Run `buildscript-mac` to setup your development environment.
 
@@ -30,7 +30,7 @@ Setup an Amulet Build Environment on Linux
 
 2. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
 
-		git clone --recursive https://gitlab.cs.dartmouth.edu/amulet/amulet-dev.git
+		git clone --recursive https://github.com/AmuletGroup/amulet-project.git
 
 3. Run `buildscript-linux` to setup your development environment.
 
