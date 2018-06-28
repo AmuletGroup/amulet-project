@@ -46,18 +46,43 @@ We envision the Amulet Platform as being broadly applicable to those in the sens
 ### Contributors and Acknowledgements
 Amulet is an ongoing collaboration between Dartmouth College and Clemson University.
 
-The current Amulet team is:
+**Dartmouth College:**
 
-- George Boateng (Dartmouth)
-- Ryan Halter (Dartmouth)
-- Taylor Hardin (Dartmouth)
-- Steven Hearndon (Clemson)
-- Josiah Hester (Clemson)
-- Dave Kotz (Dartmouth)
-- Sarah Lord (Dartmouth)
-- Ron Peterson (Dartmouth)
-- Joe Skinner (Dartmouth)
-- Jacob Sorber (Clemson)
+- Ryan Halter (Engineering): Co-PI; Assistant Professor of Engineering.
+- David Kotz (Computer Science): Principal Investigator; Professor of Computer Science.
+- John Batsis (Geisel School Of Medicine)
+- Taylor Hardin (Computer Science): graduate student.
+- Sarah Lord (Psychiatric Research Center)
+- Jasmine Mai (Computer Science): undergraduate student.
+- Varun Mishra (Computer Science): graduate student.
+- Patrick Proctor (Computer Science): programmer.
+- Ron Peterson (Computer Science): senior programmer.
+- Gunnar Pope (Engineering): graduate student.
+
+**Clemson University:**
+
+- Kelly Caine (Human Centered Computing): Co-PI; Assistant Professor of Human-Centered Computing.
+- Josiah Hester (Computer Science): graduate student, now at Northwestern.
+- Vivian Motti (Human Centered Computing): now at George Mason University.
+- Ryan Scott (Computer Science: Graduate Student.
+- Jacob Sorber (Computer Science): PI; Assistant Professor of Computer Science.
+- Byron Lowens (Human Centered Computing): graduate student.
+
+**Former members:**
+
+- George Boateng (Engineering): graduate student; now at ETH Zurich.
+- Eric Chen (Computer Science): undergraduate student.
+- Kevin Freeman (Computer Science): graduate student.
+- Bhargav Golla (Computer Science): graduate student.
+- Emily Greene (Computer Science): undergraduate student; now at Amazon.
+- Steven Hearndon (Computer Science): graduate student.
+- Hilary Johnson (Engineering): undergraduate student.
+- Anna Knowles (Computer Science): undergraduate student.
+- Andrés Molina-Markham (Computer Science); now at RSA Labs.
+- Emma Oberstein (Computer Science): undergraduate student.
+- Travis Peters (Computer Science): graduate student.
+- Joseph Skinner (Engineering): technician.
+- Tianlong Yun (Computer Science): now at Google.
 
 This research results from a research program at the Institute for Security, Technology, and Society, supported by the National Science Foundation under award numbers CNS- 1314281, CNS-1314342, and TC-0910842, and by the Department of Health and Human Services (SHARP program) under award number 90TR0003-01. The views and conclusions contained in this document are those of the authors and should not be interpreted as necessarily representing the official policies, either expressed or implied, of the sponsors.
 
