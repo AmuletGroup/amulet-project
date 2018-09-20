@@ -1,5 +1,13 @@
-## API Documentation
+#### Table of Contents
 
+- [API Documentation](#api-documentation)
+- [Creating a New Project](#creating-a-new-project)
+- [Setup an Amulet Firmware Toolchain Config File](#setup-an-amulet-firmware-toolchain-config-file)
+- [Program an Amulet Device](#program-an-amulet-device)
+- [Troubleshooting](#troubleshooting)
+
+API Documentation
+===
 When developing applications ("apps"), you will likely want to make function calls into the system to do things like get data from a sensor, write information to a log, or update the display with information from your app --- just to name a few examples. You can find the relevant Amulet APIs here: [http://www.cs.dartmouth.edu/~amulet/docs/files.html](http://www.cs.dartmouth.edu/~amulet/docs/files.html). In order to access the docs stored on the dartmouth servers you'll need the login information: 
 
 **username:** amuletdev
@@ -8,7 +16,8 @@ When developing applications ("apps"), you will likely want to make function cal
 
 **NOTE:** *It used to be that applications were required to specify a "requestor ID" as part of any call made to the underlying amulet system. The AFT now automatically inserts this to ensure that apps are honest when providing this ID. Therefore, you should not add any argument manually to attempt to tell the system which app is calling the function as this will be handled automatically*.
 
-## Creating a New Project
+Creating a New Project
+===
 
 1. Go to `/amulet-project/applications/`
 2. Duplicate the folder `template_app` and change its name to your app’s name. You can do that in the termal with the following commands 
@@ -48,7 +57,8 @@ When developing applications ("apps"), you will likely want to make function cal
 		<p style="clear: both;">
 	</div>
 
-## Setup an Amulet Firmware Toolchain Config File
+Setup an Amulet Firmware Toolchain Config File
+===
 
 The following code is an example of an Amulet Firmware Toolchain (AFT) .config file, and is based off of [this](../firmware/aft/example_firmware.config) config file. Please remember to update the following file paths with your own.
 
@@ -100,7 +110,8 @@ The following code is an example of an Amulet Firmware Toolchain (AFT) .config f
 	    compiler: gcc
 	    gcc_root: ~/ti/gcc/bin
 
-## Program an Amulet Device
+Program an Amulet Device
+===
 
 1. Make sure that your .config file contains all of the apps that you want to run on the Amulet.
 
@@ -112,7 +123,7 @@ The following code is an example of an Amulet Firmware Toolchain (AFT) .config f
 
 		./aft --all --verbose Path_To_Your_Config_File/[your_config_file].config
 
-4. Connect your Amulet to the computer using the [TagConnect JTAG Dongle](http://www.tag-connect.com/what-is-tag-connect) connected to a programmer; this programmer can either be a MSP430FET, or a MSP430FRX9X9 launchpad. If you are using a launchpad, the picture below shows how to hook up the TagConnect [SPI-BI-WIRE connector](../media/tag-connect-spi-bi-wire.jpg) and [POGO PIN wire](../media/tag-connect-pogo-wire.jpg) to a launchpad.
+4. Connect your Amulet to the computer using the [TagConnect JTAG Dongle](http://www.tag-connect.com/what-is-tag-connect) connected to a programmer; this programmer can either be an [MSP430FET](http://www.ti.com/tool/msp-fet), or an MSP430FRX9X9 launchpad. If you are using a launchpad, the picture below shows how to hook up the TagConnect [SPI-BI-WIRE connector](../media/tag-connect-spi-bi-wire.jpg) and [POGO PIN wire](../media/tag-connect-pogo-wire.jpg) to a launchpad.
 
 	<div>
 		<img style="float: left; margin-right: 1%; margin-bottom: 0.5em;" src="../media/launchpad-hookup.jpg" height="250px" alt="launchpad connections"/>
@@ -133,7 +144,8 @@ When you first run the above command you might get a message indicating that you
 You can see an in depth explanation of how the aft works and it's flag options [here.](../firmware/aft/README.md)
 
 
-## Troubleshooting
+Troubleshooting
+===
 
 Use the -d option in AFT to start debugging the firmware, it will break on main, then you use GDB as usual.
 I also recommend you print debug message on the Sharp display, use the following to print and clear:
@@ -141,14 +153,9 @@ I also recommend you print debug message on the Sharp display, use the following
 `BSP_display("IPC interrupt", 1);`
 The second parameter is the line number.
 
-UART debug has been removed from this document as UART no longer exist in our current hardware rev. If you need that, please find them in git history.
-
 If you have trouble going into gdb with ./aft -d script, you can try to manually start debugging session with command in the `src/aft/tools.gdb.cmd`
 
-Inevitably you will encounter issues while developing different aspects of the amulet system, be it with application development, amulet-os development, BSP development, AFT development, or something else. This page exists to capture information about some known issues and may help you resolve a problem you have.
-
-## Cannot merge apps into a single file
-
+### Cannot merge apps into a single file
 When using the AFT to build a firmware image for the amulet you may encounter a message similar to this:
 
 ```
@@ -159,7 +166,7 @@ Error...Step failed. Exiting!
 
 It may be that the location of QM tool is not correct. The `aft` script assumes that you have QM installed and specifies a variable called `qpc_root` where you are supposed to specify the location of the `qmc` executable (this is specified in your config file).
 
-## One of the core state machine stop working
+### One of the core state machine stop working
 The queue(s) for the state machine can fill up quickly if you carelessly use them (ex. if you create an event but do not use it). The best practice is to create an event right before you are about to post it.
 
 ```
@@ -167,7 +174,3 @@ AmuletSensorsEvt *timeReqEvt;
 timeReqEvt = Q_NEW(AmuletSensorsEvt, AMULET_REQ_CHANGE_SIG);
 QACTIVE_POST(getAppActiveObject(GlobalAppQueueHead, subscribedAppID), &timeReqEvt->super, NULL);
 ```
-
-## BLE Development
-
-You can view our guide on BLE development [here.](../firmware/ble/README.md)
