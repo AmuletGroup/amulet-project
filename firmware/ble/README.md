@@ -1,6 +1,6 @@
 Amulet BLE Development
 ==========================
-This document outlines howto get started with the BLE toolchain for Amulet devices. It is terribly important that you [read this first.](https://github.com/lab11/nrf5x-base)
+This document outlines how to get started with the BLE toolchain for Amulet devices. It is terribly important that you [read this first.](https://github.com/lab11/nrf5x-base)
 
 # Table of Contents
 1. [Prerequisites](#pre)
