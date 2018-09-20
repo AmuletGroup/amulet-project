@@ -1,13 +1,14 @@
-Preface
-====
-If you do not already have the Amulet hardware, or have not yet set it up, please refer to our hardware guide [here](hardware/README.md) for help.
-
 #### Table of Contents
 
+- [Obtain an Amulet](#obtain-an-amulet)
 - [Setup an Amulet Build Environment on Mac OSX](#setup-an-amulet-build-environment-on-mac-osx)
 - [Setup an Amulet Build Environment on Linux](#setup-an-amulet-build-environment-on-linux)
 - [Program an Amulet Device](#program-an-amulet-device)
 - [BLE Development](#ble-development)
+
+Obtain an Amulet
+===
+You can build your own using the hardware files provided or request pre-built Amulet's from us by contacting rapjr@cs.dartmouth.edu. If you are part of a research lab we will generally accept your request.
 
 Setup an Amulet Build Environment on Mac OSX
 ===

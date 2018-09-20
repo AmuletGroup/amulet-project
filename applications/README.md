@@ -1,20 +1,3 @@
-# Develop Amulet Apps
-
-* When developing applications ("apps"), you will likely want to make function calls into the system to do things like get data from a sensor, write information to a log, or update the display with information from your app --- just to name a few examples. You can find the relevant Amulet APIs here: [http://www.cs.dartmouth.edu/~amulet/docs/files.html](http://www.cs.dartmouth.edu/~amulet/docs/files.html). In order to access the docs stored on the dartmouth servers you'll need the login information: 
-
-	* **username:** amuletdev
-	* **password:** r4UaStr7OdcK4OcuUY4FN
-
-	* **NOTE:** *It used to be that applications were required to specify a "requestor ID" as part of any call made to the underlying amulet system. The AFT now automatically inserts this to ensure that apps are honest when providing this ID. Therefore, you should not add any argument manually to attempt to tell the system which app is calling the function as this will be handled automatically*.
-
-
-* Something important to note is that we envision the amulet to be a very *secure* platform for applications to run on. One aspect of accomplishing this is making sure that applications only have permission to do the things they need to do: no more, no less. Currently, we require each app to include a meta data file similar to the "Manifest" files used by every Android application. To see an example of such a file, take a look at the [Battery Meter app "manifest" flie](battery_meter/battery_meter.xml). 
-
-	* The best/easiest way to get started is to copy an `.xml` file from another app folder such as the one linked above.
-
-* The amulet is unique in that applications run as "state machines." This is actually what allows us to make amulet run on such little power --- when an application doesn't need to be doing anything, we can put the processor into a very low power mode. Here is a link to the [Official Documents](http://state-machine.com/qm/) for QM with great information on how to design applications as state machines.
-
-
 ## API Documentation
 
 When developing applications ("apps"), you will likely want to make function calls into the system to do things like get data from a sensor, write information to a log, or update the display with information from your app --- just to name a few examples. You can find the relevant Amulet APIs here: [http://www.cs.dartmouth.edu/~amulet/docs/files.html](http://www.cs.dartmouth.edu/~amulet/docs/files.html). In order to access the docs stored on the dartmouth servers you'll need the login information: 
@@ -174,7 +157,7 @@ SUCCESS:: App built successfully
 Error...Step failed. Exiting!
 ```
 
-It may be that the location of QM tool is not correct. The `aft` script assumes that you have QM installed and specifies a variable called `qpc_root` where you are supposed to specify the location of the `qmc` executable (you should have set this while you were following the "getting started" instructions).
+It may be that the location of QM tool is not correct. The `aft` script assumes that you have QM installed and specifies a variable called `qpc_root` where you are supposed to specify the location of the `qmc` executable (this is specified in your config file).
 
 ## One of the core state machine stop working
 The queue(s) for the state machine can fill up quickly if you carelessly use them (ex. if you create an event but do not use it). The best practice is to create an event right before you are about to post it.

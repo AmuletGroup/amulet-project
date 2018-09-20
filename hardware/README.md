@@ -28,10 +28,7 @@ The main board, battery, haptic buzzer, and secondary storage board are all hous
 
 
 ### Getting an Amulet
-Currently you can only request pre-built Amulet's from us by contacting jhester@clemson.edu, if you are part of a research lab we will generally accept your request.
-Since Amulet is open source and open hardware, you can build your own!
-
-[Order boards from Circuithub](https://circuithub.com/projects/jhester/watch)
+You can build your own using the hardware files provided or request pre-built Amulet's from us by contacting rapjr@cs.dartmouth.edu. If you are part of a research lab we will generally accept your request.
 
 ### Assembling an Amulet
 Refer to [this](../media/Amulet_DC_kitec_assembly.pdf) guide for assembling the Amulet companion board, and [this](../media/Amulet_kitec_case_assembly.pdf) guide for placing an amulet in a case.

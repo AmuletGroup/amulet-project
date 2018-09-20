@@ -13,35 +13,18 @@ The Amulet Project
 - the ARP-View energy prediction and insight graphical tool ([check out a demo here](https://arpview.herokuapp.com))
 - open reference hardware.
 
-To get started, first clone this repository (including all submodules):
-
-```
-git clone --recursive https://github.com/AmuletGroup/amulet-project.git
-```
-
-**[You can follow this guide to get hardware.](hardware/README.md)**<br>
-**[Then follow this guide to setup your environment.](GETTING_STARTED.md)**
-
-#### Table of Contents
-
-- [What is Amulet?](#what-is-amulet)
-- [Contributors and Acknowledgements](#contributors-and-acknowledgements)
-- [License](#license)
-- [Attribution](#attribution)
-
----
-
-### What is Amulet?
-
-The Amulet platform is a collection of hardware, software, and tools, that enabled long-lived wearable research and development, in a variety of scientific domains. 
-
-Amulet efficiently protects applications from each other without MMU support, allows developers to interactively explore how their implementation decisions impact battery life without the need for hardware modeling and additional software development
-**Amulet represents a new approach to developing long-lived wearable applications.** We envision the Amulet Platform enabling long-duration experiments on human subjects in a wide variety of studies.
+Amulet allows developers to interactively explore how their implementation decisions impact battery life without the need for hardware modeling and additional software development. **Amulet represents a new approach to developing long-lived wearable applications.** We envision the Amulet Platform enabling long-duration experiments on human subjects in a wide variety of studies.
 
 We also aim to equip the health-behavior science community with a wearable platform researchers can field for long-duration experiments on human subjects in a wide variety of studies, by providing the entire Amulet Platform as an open-source, open-hardware alternative to the available commercial platforms that have so far been used for wearables research. 
 We envision the Amulet Platform as being broadly applicable to those in the sensing communities, as well as domain scientists and practitioners in human-centered fields like health and fitness. With the Amulet Platform, sensor researchers can prototype new wearable devices and test new sensing technology without building from scratch.
 
 ---
+
+### Getting Started
+To learn how to obtain hardware, setup your dev environment, and program an Amulet refer to [this](GETTING_STARTED.md) guide.
+
+---
+
 
 ### Contributors and Acknowledgements
 Amulet is an ongoing collaboration between Dartmouth College and Clemson University.
