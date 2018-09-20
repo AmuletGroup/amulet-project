@@ -263,77 +263,52 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) timerA_ISR(void)
 // signal to the app
     #ifdef CAPTOUCH
 
-        #ifdef BSP_WHITE_OWL
-            if (is_captouch_enabled()) {
-                CTS_getReading();
-                if (sliderPos[1] > last_slider_loc) {
-                    slider_up_count++;
-                    slider_down_count = 0;
-                } else if (sliderPos[1] < last_slider_loc) {
-                    slider_down_count++;
-                    slider_up_count = 0;
-                }
-                if (slider_down_count > 2) {
-                    slider_down_count = 0;
-                    sliderSig = AMULET_SLIDER_DOWN_SIG;
-                    sliderSignal(sliderSig);
-                }
-                if (slider_up_count > 2) {
-                    slider_up_count = 0;
-                    sliderSig = AMULET_SLIDER_UP_SIG;
-                    sliderSignal(sliderSig);
-                    log_user_interaction(UI_EVENT_CAPTOUCH);
-                }
-                last_slider_loc = sliderPos[1];
-            }
-        #endif
+      #ifdef BSP_SNAIL_KITE
+        /* 1. Read the touch states from the MPR121. States 0-7 are stored *
+         *    in touch_states[0] and 8-11 are in touch_states[1].          */
+        uint8_t touch_states[2] = {0,0};
+        MPR121_Read_Touch_States(0x5A, touch_states);
+        uint16_t touched = (touch_states[1] << 8) | touch_states[0];
 
-        #ifdef BSP_SNAIL_KITE
-            /* 1. Read the touch states from the MPR121. States 0-7 are stored *
-             *    in touch_states[0] and 8-11 are in touch_states[1].          */
-            uint8_t touch_states[2] = {0,0};
-            MPR121_Read_Touch_States(0x5A, touch_states);
-            uint16_t touched = (touch_states[1] << 8) | touch_states[0];
+        /* 2. Loop over the first 12 bits of touched and check to see if *
+         *    there have been any changes in the states of the pins.     */
+        int i,j = 1;
+        for (i=0; i < 12; i++){
+          if(touched & j) {                 // Pin i is currently being touched. If this
+            if(capTouchStates[i] == 0){     // is the first time, mark it as touched
+              capTouchStates[i] = 1;
+              if(i > capLastPos) {          // If the current pin is "higher" than the
+                capUpCount++;               // last touched pin, then the user is sliding
+                capDownCount = 0;           // up. Increment up count, reset down count, and
+                capLastPos = i;             // break for loop
+                break;
+              }
+              if(i < capLastPos) {          // If the current pin is "lower" than the
+                capUpCount = 0;             // last touched pin, then the user is sliding
+                capDownCount++;             // down. Increment down count, reset up count,
+                capLastPos = i;             // and break for loop
+                break;
+              }
+            }
+          } else{                           // Pin i is not currently being touched
+            if(capTouchStates[i] == 1){     // Make sure that it is not marked as touched
+              capTouchStates[i] = 0;
+            }
+          }
+          j = j << 1;                       // Move to the next pin state
+        }
 
-            /* 2. Loop over the first 12 bits of touched and check to see if *
-             *    there have been any changes in the states of the pins.     */
-            int i,j = 1;
-            for (i=0; i < 12; i++){
-                if(touched & j) {                       // Pin i is currently being touched. If this
-                    if(capTouchStates[i] == 0){         // is the first time, mark it as touched
-                        capTouchStates[i] = 1;
-                        if(i > capLastPos) {            // If the current pin is "higher" than the
-                            capUpCount++;               // last touched pin, then the user is sliding
-                            capDownCount = 0;           // up. Increment up count, reset down count, and
-                            capLastPos = i;             // break for loop
-                            break;
-                        }
-                        if(i < capLastPos) {            // If the current pin is "lower" than the
-                            capUpCount = 0;             // last touched pin, then the user is sliding
-                            capDownCount++;             // down. Increment down count, reset up count,
-                            capLastPos = i;             // and break for loop
-                            break;
-                        }
-                    }
-                } else{                                 // Pin i is not currently being touched
-                    if(capTouchStates[i] == 1){         // Make sure that it is not marked as touched
-                        capTouchStates[i] = 0;
-                    }
-                }
-                j = j << 1;                             // Move to the next pin state
-            }
-
-            /* 3. The capSlideThreshold determines how many pins need to be     *
-             *    touched in a row (either up or down) to constitute a "slide". */
-            if(capUpCount >= capSlideThreshold) {
-                capUpCount = 0;
-                sliderSignal(AMULET_SLIDER_UP_SIG);
-            }
-            if(capDownCount >= capSlideThreshold) {
-                capDownCount = 0;
-                sliderSignal(AMULET_SLIDER_DOWN_SIG);
-            }
-        #endif
+        /* 3. The capSlideThreshold determines how many pins need to be     *
+         *    touched in a row (either up or down) to constitute a "slide". */
+        if(capUpCount >= capSlideThreshold) {
+            capUpCount = 0;
+            sliderSignal(AMULET_SLIDER_UP_SIG);
+        }
+        if(capDownCount >= capSlideThreshold) {
+            capDownCount = 0;
+            sliderSignal(AMULET_SLIDER_DOWN_SIG);
+        }
+      #endif
     #endif
 }
 

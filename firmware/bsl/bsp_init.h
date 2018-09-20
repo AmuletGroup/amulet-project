@@ -14,8 +14,4 @@
 #include "bsp_snail_kite_init.h"
 #endif
 
-#ifdef BSP_WHITE_OWL
-#include "bsp_white_owl_init.h"
-#endif
-
 #endif
