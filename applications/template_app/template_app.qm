@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="3.3.0">
+ <framework name="qpc"/>
+ <package name="AO" stereotype="0x02">
+  <class name="template_app" superclass="qpc::QActive">
+   <attribute name="var1" type="int" visibility="0x00" properties="0x00"/>
+   <attribute name="var2" type="float" visibility="0x00" properties="0x00"/>
+   <operation name="function1" type="void" visibility="0x00" properties="0x00"/>
+   <operation name="function2" type="int" visibility="0x00" properties="0x00"/>
+   <statechart>
+    <initial target="../1">
+     <action brief="Start">AmuletTimer(1);</action>
+     <initial_glyph conn="7,2,4,0,1,21,9">
+      <action box="0,-2,10,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="off">
+     <entry>AmuletLEDOn(EXTERNAL_RED);
+AmuletLEDOff(EXTERNAL_GREEN);</entry>
+     <tran trig="AMULET_REQ_CHANGE" target="..">
+      <tran_glyph conn="45,27,1,1,2,5,-2">
+       <action box="0,-2,10,2"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="13,12,32,22">
+      <entry box="1,2,26,16"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="107,62"/>
+   </statechart>
+  </class>
+  <attribute name="AO_template_app" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="template_app_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>template_app *me = (template_app *)AO_template_app;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;template_app_initial);</code>
+  </operation>
+ </package>
+</model>
