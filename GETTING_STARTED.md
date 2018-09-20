@@ -3,6 +3,7 @@
 - [Obtain an Amulet](#obtain-an-amulet)
 - [Setup an Amulet Build Environment on Mac OSX](#setup-an-amulet-build-environment-on-mac-osx)
 - [Setup an Amulet Build Environment on Linux](#setup-an-amulet-build-environment-on-linux)
+- [Setup an Amulet Build Environment on Windows](#setup-an-amulet-build-environment-on-windows)
 - [Program an Amulet Device](#program-an-amulet-device)
 - [BLE Development](#ble-development)
 
@@ -32,6 +33,10 @@ Setup an Amulet Build Environment on Linux
 		git clone --recursive https://github.com/AmuletGroup/amulet-project.git
 
 3. Run `buildscript-linux` to setup your development environment.
+
+Setup an Amulet Build Environment on Windows
+===
+1. Run a Linux VM and follow the above setup steps.
 
 
 Program an Amulet Device
