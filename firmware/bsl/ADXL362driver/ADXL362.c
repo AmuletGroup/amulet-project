@@ -219,8 +219,9 @@ void ADXL362readFIFO(int16_t FIFOarray[], uint8_t numberOfSamples){
 	regValueH = SPItransfer(0x00); // Send a dummy value to read the next byte.
         // Mask off upper nibble of high byte and combine to get a 12 bit value
         // Also move sign bit to most significant bit.
-        FIFOarray[it] = regValueL + ((regValueH & 0b00000111) << 8) +
-           ((regValueH & 0b00001000) << 12);
+        uint16_t temp;
+        temp = regValueL + ((regValueH & 0x3F) << 8);
+        FIFOarray[it] = ((temp & 0x3000) << 2) | temp;
    }
    ADXL362ChipSelect(HIGH); // End transmission
 } // End of ADXL362readFIFO()...
