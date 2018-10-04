@@ -15,7 +15,7 @@ Setup an Amulet Build Environment on Mac OSX
 ===
 **NOTE: To be able to do this you may need to disable the System Integrity Protection (SIP). This can be done by booting into recovery mode (⌘ + R on boot) and accessing the Terminal (Utilities > Terminal). To disable type the command `csrutil disable` followed by reboot to restart your machine.**
 
-1. [Download and install GCC compiler and tools using the installer for Mac OSX.](http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/index_FDS.html)
+1. Download and install the [MSP-GCC compiler and tools](http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/index_FDS.html) using the installer for Mac OSX.
 
 2. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
 
@@ -26,7 +26,7 @@ Setup an Amulet Build Environment on Mac OSX
 
 Setup an Amulet Build Environment on Linux
 ===
-1. [Download the GCC compiler and tools for Linux.](http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/index_FDS.html)
+1. Download the [MSP-GCC compiler and tools](http://software-dl.ti.com/msp430/msp430_public_sw/mcu/msp430/MSPGCC/latest/index_FDS.html) for Linux.
 
 2. Download the amulet repo with the following command, which will make sure that you also get all of the associated submodules.
 
@@ -36,7 +36,15 @@ Setup an Amulet Build Environment on Linux
 
 Setup an Amulet Build Environment on Windows
 ===
-1. Run a Linux VM and follow the above setup steps.
+There is no native support for developing Amulet applications on Windows, but we do provide a Linux VM image that you can use to develop for Amulet.
+
+1. Download and install [VirtualBox](https://www.virtualbox.org).
+
+2. Download our [Amulet VM image](https://drive.google.com/file/d/1PUncyOrKgLr5kVQ1M6YulubZqJR3-wOM/view?usp=sharing).
+
+3. Run VirtualBox and select `File > Import Appliance`. Select `AmuletLinuxVM.ova` and follow the default prompts.
+
+4. The image should now appear on the left-hand side of the main VirtualBox window, and can be run by selecting it and clicking the green start button. The default **user** is `amuletuser` and the **password** is `amulet`.
 
 
 Program an Amulet Device
