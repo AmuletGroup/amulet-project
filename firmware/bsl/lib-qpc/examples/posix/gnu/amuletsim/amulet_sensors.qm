@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="2.3.2">
+ <framework name="qpc"/>
+ <package name="Events" stereotype="0x01">
+  <class name="AmuletSensorsEvt" superclass="qpc::QEvt">
+   <attribute name="imu_a" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="imu_b" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="imu_c" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="expiration" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="window_size" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="sensor_id" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="window_interval" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="caller_id" type="uint8_t" visibility="0x00" properties="0x00"/>
+  </class>
+  <class name="SensorEvt" superclass="qpc::QEvt"/>
+ </package>
+ <package name="AOs" stereotype="0x02">
+  <class name="AmuletSensors" superclass="qpc::QActive">
+   <statechart>
+    <initial target="../1">
+     <initial_glyph conn="28,6,5,0,16,10">
+      <action box="0,-2,6,2"/>
+     </initial_glyph>
+    </initial>
+    <state name="SensorsEnabled">
+     <tran trig="LIST_INTERNAL_SENSORS" target="..">
+      <tran_glyph conn="23,22,3,1,43,2,-2">
+       <action box="0,-2,30,4"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="SUBSCRIBE_INTERNAL_SENSOR" target="..">
+      <action>//uint8_t params[1] = {1}; 
+//uint8_t *params = malloc(2); //TODO: Make sure that you free
+//this memory after the correposnding IPC message has been 
+//acked
+//params[0] = 0xfa;
+//params[1] = 0xce;
+//uint8_t sensor = Q_EVT_CAST(AmuletSensorsEvt)-&gt;sensor_id;
+//uint8_t caller = Q_EVT_CAST(AmuletSensorsEvt)-&gt;caller_id;
+//SubscribeInternalSensor(BUTTONA, params, 1, 0, 1, 0, 2);
+//SubscribeInternalSensor(sensor, params, 2, 0, 1, 0, caller);
+
+AmuletNetworkEvt *subscribeIPCMessageEvt;
+uint8_t * subscriptionParameters = malloc(11);
+
+//params
+//device_id, expiration, window_size, window_interval, caller_id
+//1+4+1+1+1
+//e.g.:
+//HRM, 0x0000, 0x0001,0x0001,0x01
+subscriptionParameters[0] = Q_EVT_CAST(AmuletSensorsEvt)-&gt;sensor_id;
+subscriptionParameters[1] = (uint8_t) Q_EVT_CAST(AmuletSensorsEvt)-&gt;expiration; //exp
+subscriptionParameters[2] = (uint8_t) (Q_EVT_CAST(AmuletSensorsEvt)-&gt;expiration) &gt;&gt; 8; //exp
+subscriptionParameters[3] = (uint8_t) Q_EVT_CAST(AmuletSensorsEvt)-&gt;window_size; 
+subscriptionParameters[4] = (uint8_t) (Q_EVT_CAST(AmuletSensorsEvt)-&gt;window_size) &gt;&gt; 8; 
+subscriptionParameters[5] = (uint8_t) Q_EVT_CAST(AmuletSensorsEvt)-&gt;window_interval; 
+subscriptionParameters[6] = (uint8_t) (Q_EVT_CAST(AmuletSensorsEvt)-&gt;window_interval) &gt;&gt; 8;
+subscriptionParameters[7] = (uint8_t) Q_EVT_CAST(AmuletSensorsEvt)-&gt;imu_a;
+subscriptionParameters[8] = (uint8_t) Q_EVT_CAST(AmuletSensorsEvt)-&gt;imu_b;
+subscriptionParameters[9] = (uint8_t) Q_EVT_CAST(AmuletSensorsEvt)-&gt;imu_c;
+subscriptionParameters[10] = Q_EVT_CAST(AmuletSensorsEvt)-&gt;caller_id;  
+
+
+subscribeIPCMessageEvt = Q_NEW(AmuletNetworkEvt, ADD_MESSAGE_TO_QUEUE_SIG);
+subscribeIPCMessageEvt-&gt;majorType = IPC_REQUEST;
+subscribeIPCMessageEvt-&gt;minorType = SUBSCRIBE_INTERNAL_SENSOR;
+subscribeIPCMessageEvt-&gt;targetID = INT_SENSOR_MAN_M0;
+subscribeIPCMessageEvt-&gt;params = subscriptionParameters;
+subscribeIPCMessageEvt-&gt;nparams = 11;
+
+SubscribeInternalSensor(Q_EVT_CAST(AmuletSensorsEvt)-&gt;sensor_id, subscriptionParameters, 11, 0, 1, 0, Q_EVT_CAST(AmuletSensorsEvt)-&gt;caller_id);
+QACTIVE_POST(AO_AmuletNetwork, &amp;subscribeIPCMessageEvt-&gt;super, NULL);</action>
+      <tran_glyph conn="23,26,3,1,43,2,-2">
+       <action box="0,-2,31,6"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="23,16,41,30"/>
+    </state>
+    <state_diagram size="80,85"/>
+   </statechart>
+  </class>
+  <attribute name="AO_AmuletSensors" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="AmuletSensors_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>AmuletSensors *me = (AmuletSensors *)AO_AmuletSensors;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;AmuletSensors_initial);
+</code>
+  </operation>
+ </package>
+ <directory name=".">
+  <file name="amulet_sensors.c">
+   <text>#include &lt;stdlib.h&gt;
+
+#include &quot;amulet_sensors.h&quot;
+
+
+
+/* Active object class -----------------------------------------------------*/
+$declare(AOs::AmuletSensors)
+
+
+//void QF_onClockTick(void) {
+//    QF_TICK((void *)0);
+//}
+
+
+/* Local objects -----------------------------------------------------------*/
+static AmuletSensors l_amulet_sensors; /* the single instance of the AmuletSensors active object */
+
+
+/* Global-scope objects ----------------------------------------------------*/
+QActive * const AO_AmuletSensors = &amp;l_amulet_sensors.super; /* &quot;opaque&quot; AO pointer */
+
+$define(AOs::AmuletSensors_ctor)
+
+$define(AOs::AmuletSensors)</text>
+  </file>
+  <file name="amulet_sensors.h">
+   <text>#ifndef amulet_sensors_h
+#define amulet_sensors_h
+
+#include &quot;qp_port.h&quot;
+#include &quot;amulet.h&quot;
+#include &quot;amulet_api.h&quot;
+
+// Internal sensors and devices:
+#define IMU 1
+#define ACCELEROMETER 2
+#define GYROSCOPE 3
+#define MAGNETOMETER 4
+#define MICROPHONE 5
+#define LIGHT 6
+#define TEMPERATURE 7
+#define POWER_CURRENT 8
+#define POWER_VOLTAGE 9
+#define M0_SUPPLY_VOLTAGE 10
+#define BUTTONA 11
+#define BUTTONB 12
+
+
+
+enum AmuletSensorsSignals {
+    LIST_INTERNAL_SENSORS_SIG = Q_USER_SIG,
+    SUBSCRIBE_INTERNAL_SENSOR_SIG,
+    DEVICE_DATA_SIG
+};
+
+enum SensorSignals {
+    BUTTON_A_PRESSED_SIG = Q_USER_SIG + 5,
+    BUTTON_B_PRESSED_SIG,
+};
+
+$declare(Events::AmuletSensorsEvt)
+$declare(Events::SensorEvt)
+
+$declare(AOs::AmuletSensors_ctor)
+$declare(AOs::AO_AmuletSensors)
+
+#endif                    /* amulet_sensors_h */</text>
+  </file>
+ </directory>
+</model>

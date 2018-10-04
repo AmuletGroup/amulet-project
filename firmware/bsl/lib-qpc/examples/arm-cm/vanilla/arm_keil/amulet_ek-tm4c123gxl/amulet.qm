@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="2.3.2">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="Amulet" superclass="qpc::QActive">
+   <attribute name="timeEvt" type="QTimeEvt" visibility="0x00" properties="0x00"/>
+   <statechart>
+    <initial target="../1">
+     <action>/*this is a comment*/
+//QTimeEvt_postEvery(&amp;me-&gt;timeEvt, (QActive *)me, BSP_TICKS_PER_SEC/2);
+//QActive_subscribe(&amp;me-&gt;super, DONE_SIG);
+//QActive_subscribe(&amp;me-&gt;super, PAUSE_SIG);
+QActive_subscribe(&amp;me-&gt;super, TURNLEDON_SIG);
+QActive_subscribe(&amp;me-&gt;super, TURNLEDOFF_SIG);</action>
+     <initial_glyph conn="12,3,4,0,8,8,8">
+      <action box="0,-2,42,7"/>
+     </initial_glyph>
+    </initial>
+    <state name="ServicesEnabled">
+     <entry>//BSP_ConfigureServices();</entry>
+     <tran trig="TURNLEDON" target="..">
+      <action>BSP_ledOn();
+//BSP_temperatureOn();</action>
+      <tran_glyph conn="59,27,1,3,-13,1,-40,7,2">
+       <action box="0,-2,22,5"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="TURNLEDOFF" target="..">
+      <action>BSP_ledOff();</action>
+      <tran_glyph conn="59,35,1,3,-26,3,-29,-12,3,5,1">
+       <action box="0,-2,20,4"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="8,19,51,22">
+      <entry box="1,2,28,6"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="80,50"/>
+   </statechart>
+  </class>
+  <attribute name="AO_Amulet" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="Amulet_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>Amulet *me = (Amulet *)AO_Amulet;
+    QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;Amulet_initial);
+    //QTimeEvt_ctor(&amp;me-&gt;timeEvt, TSWITCH_SIG);</code>
+  </operation>
+ </package>
+ <package name="Events" stereotype="0x01">
+  <class name="TurnLedEvt" superclass="qpc::QEvt">
+   <attribute name="onoff" type="QSignal" visibility="0x00" properties="0x00"/>
+  </class>
+ </package>
+ <directory name=".">
+  <file name="amulet.c">
+   <text>#include &quot;qp_port.h&quot;
+#include &quot;dpp.h&quot;
+#include &quot;blinky.h&quot;
+#include &quot;amulet.h&quot;
+#include &quot;bsp.h&quot;
+
+/* Active object class -----------------------------------------------------*/
+$declare(AOs::Amulet)
+
+
+//void QF_onClockTick(void) {
+//    QF_TICK((void *)0);
+//}
+
+
+/* Local objects -----------------------------------------------------------*/
+static Amulet l_amulet; /* the single instance of the Amulet active object */
+
+
+/* Global-scope objects ----------------------------------------------------*/
+QActive * const AO_Amulet = &amp;l_amulet.super; /* &quot;opaque&quot; AO pointer */
+
+$define(AOs::Amulet_ctor)
+
+$define(AOs::Amulet)</text>
+  </file>
+  <file name="amulet.h">
+   <text>#ifndef amulet_h
+#define amulet_h
+
+
+enum AmuletSignals {
+    TURNLEDON_SIG = Q_USER_SIG,
+    TURNLEDOFF_SIG
+};
+
+$declare(Events::TurnLedEvt)
+
+$declare(AOs::Amulet_ctor)
+$declare(AOs::AO_Amulet)
+
+#endif                    /* amulet_h */</text>
+  </file>
+ </directory>
+</model>

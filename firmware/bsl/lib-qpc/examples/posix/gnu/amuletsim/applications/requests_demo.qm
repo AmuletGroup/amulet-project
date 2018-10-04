@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="2.3.2">
+ <framework name="qpc"/>
+ <package name="AOs" stereotype="0x02">
+  <class name="RequestsDemo" superclass="qpc::QActive">
+   <attribute name="timeEvt" type="QTimeEvt" visibility="0x02" properties="0x00"/>
+   <statechart>
+    <initial target="../1">
+     <action>QTimeEvt_postEvery(&amp;me-&gt;timeEvt, (QActive *)me, BSP_TICKS_PER_SEC/4);
+
+/*
+//Subscribe to button events
+AmuletSensorsEvt *button1Evt;
+AmuletSensorsEvt *button2Evt;
+button1Evt = Q_NEW(AmuletSensorsEvt, SUBSCRIBE_INTERNAL_SENSOR_SIG);
+button1Evt-&gt;sensor_id =  BUTTONA;
+button1Evt-&gt;caller_id = HELLO_APP;
+button2Evt = Q_NEW(AmuletSensorsEvt, SUBSCRIBE_INTERNAL_SENSOR_SIG);
+button2Evt-&gt;sensor_id =  BUTTONB;
+button2Evt-&gt;caller_id = HELLO_APP;
+QACTIVE_POST(AO_AmuletSensors, &amp;button1Evt-&gt;super, me);
+QACTIVE_POST(AO_AmuletSensors, &amp;button2Evt-&gt;super, me);
+
+QActive_subscribe(&amp;me-&gt;super, BUTTON_A_PRESSED_SIG);
+QActive_subscribe(&amp;me-&gt;super, BUTTON_B_PRESSED_SIG);
+*/
+
+</action>
+     <initial_glyph conn="12,3,4,0,8,8,3">
+      <action box="0,-2,42,7"/>
+     </initial_glyph>
+    </initial>
+    <state name="off">
+     <entry>//DIRECTED Message
+AmuletActuatorsEvt *ledEvt;
+
+ledEvt = Q_NEW(AmuletActuatorsEvt, LEDOFF_SIG);
+ledEvt-&gt;led_id =  ACTLED3;
+QACTIVE_POST(AO_AmuletActuators, &amp;ledEvt-&gt;super, me);
+</entry>
+     <tran trig="REQ_CHANGE" target="../../2">
+      <tran_glyph conn="32,25,1,3,8">
+       <action box="0,-2,11,3"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="BUTTON_A_PRESSED" target="..">
+      <action>AmuletActuatorsEvt *displayEvt;
+uint8_t * dmessage = &quot;buttona \r\n&quot;;
+displayEvt = Q_NEW(AmuletActuatorsEvt, DISPLAY_MESSAGE_SIG);
+displayEvt-&gt;message = dmessage;
+displayEvt-&gt;message_len = 10;
+QACTIVE_POST(AO_AmuletActuators, &amp;displayEvt-&gt;super, me);</action>
+      <tran_glyph conn="1,29,3,1,23,-2,8">
+       <action box="0,-2,22,4"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="BUTTON_B_PRESSED" target="..">
+      <action>AmuletActuatorsEvt *displayEvt;
+uint8_t * dmessage = &quot;buttonb \r\n&quot;;
+displayEvt = Q_NEW(AmuletActuatorsEvt, DISPLAY_MESSAGE_SIG);
+displayEvt-&gt;message = dmessage;
+displayEvt-&gt;message_len = 10;
+QACTIVE_POST(AO_AmuletActuators, &amp;displayEvt-&gt;super, me);
+
+
+//Ask amulet to turn led off
+//AmuletActuatorsEvt *ledEvt;
+
+//ledEvt = Q_NEW(AmuletActuatorsEvt, LEDOFF_SIG);
+//ledEvt-&gt;led_id =  ACTLED2;
+//QACTIVE_POST(AO_AmuletActuators, &amp;ledEvt-&gt;super, me);
+
+
+///Do not call the BSP directly:
+//BSP_ledOff();
+
+///Publish-subscribe message:
+//AmuletActuatorsEvt *ledEvt;
+//ledEvt = Q_NEW(AmuletActuatorsEvt, LEDOFF_SIG);
+//QF_PUBLISH(&amp;ledEvt-&gt;super, me);
+
+// Using the ExternalSensorManager
+ExternalSensorsRequestEvt *subscriptionEvt;
+subscriptionEvt = Q_NEW(ExternalSensorsRequestEvt, SUBSCRIBE_EXT_SENSOR_SIG);
+subscriptionEvt-&gt;device_id = HRM;
+subscriptionEvt-&gt;expiration = 0;
+subscriptionEvt-&gt;window_size = 1;
+subscriptionEvt-&gt;window_interval = 1;
+subscriptionEvt-&gt;caller_id = REQUESTS_DEMO_APP;
+QACTIVE_POST(AO_AmuletExternalSensors, &amp;subscriptionEvt-&gt;super, me);
+
+/*
+//Also for testing purposes:
+            //Generate an IPC message:
+            //uint8_t messageParameters[3] = { 1, 2, 3 };
+            uint8_t * messageParameters = malloc(3);
+            //TODO: Make sure this memory gets freed when the corresponding IPC message
+            //has been acked.
+            messageParameters[0] = 1;
+            messageParameters[1] = 2;
+            messageParameters[2] = 3;
+            //uint8_t messageBytes[19];
+
+            AmuletNetworkEvt *testMessageEvt;
+            testMessageEvt = Q_NEW(AmuletNetworkEvt, ADD_MESSAGE_TO_QUEUE_SIG);
+            testMessageEvt-&gt;majorType = IPC_REQUEST;
+            testMessageEvt-&gt;minorType = SUBSCRIBE_INTERNAL_SENSOR;
+            testMessageEvt-&gt;targetID = INT_SENSOR_MAN_M0;
+            testMessageEvt-&gt;params = messageParameters;
+            testMessageEvt-&gt;nparams = 3;
+            QACTIVE_POST(AO_AmuletNetwork, &amp;testMessageEvt-&gt;super, NULL);
+*/
+</action>
+      <tran_glyph conn="1,34,3,1,33,2,-2">
+       <action box="0,-2,26,4"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="1,14,31,29">
+      <entry box="1,2,5,2"/>
+     </state_glyph>
+    </state>
+    <state name="on">
+     <entry>//DIRECTED message:
+AmuletActuatorsEvt *ledEvt;
+uint8_t *auth = malloc(1);
+ledEvt = Q_NEW(AmuletActuatorsEvt, LEDON_SIG);
+ledEvt-&gt;led_id =  ACTLED3;
+auth[0] = 1;
+ledEvt-&gt;authorization = auth;
+
+QACTIVE_POST(AO_AmuletActuators ,&amp;ledEvt-&gt;super, me);</entry>
+     <tran trig="REQ_CHANGE" target="../../1">
+      <tran_glyph conn="40,31,3,1,-8">
+       <action box="0,-2,29,4"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="BUTTON_A_PRESSED" target="..">
+      <action>AmuletActuatorsEvt *displayEvt;
+uint8_t * dmessage = &quot;buttona \r\n&quot;;
+displayEvt = Q_NEW(AmuletActuatorsEvt, DISPLAY_MESSAGE_SIG);
+displayEvt-&gt;message = dmessage;
+displayEvt-&gt;message_len = 10;
+QACTIVE_POST(AO_AmuletActuators, &amp;displayEvt-&gt;super, me);</action>
+      <tran_glyph conn="40,26,3,1,22,2,11">
+       <action box="0,-2,39,5"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="BUTTON_B_PRESSED" target="..">
+      <action>AmuletActuatorsEvt *displayEvt;
+uint8_t * dmessage = &quot;buttonb \r\n&quot;;
+displayEvt = Q_NEW(AmuletActuatorsEvt, DISPLAY_MESSAGE_SIG);
+displayEvt-&gt;message = dmessage;
+displayEvt-&gt;message_len = 10;
+QACTIVE_POST(AO_AmuletActuators, &amp;displayEvt-&gt;super, me);
+
+
+//Also for testing purposes:
+//Subscribe to the HRM sensor.
+
+
+// Using the ExternalSensorManager
+ExternalSensorsRequestEvt *subscriptionEvt;
+subscriptionEvt = Q_NEW(ExternalSensorsRequestEvt, SUBSCRIBE_EXT_SENSOR_SIG);
+subscriptionEvt-&gt;device_id = HRM;
+subscriptionEvt-&gt;expiration = 0;
+subscriptionEvt-&gt;window_size = 1;
+subscriptionEvt-&gt;window_interval = 1;
+subscriptionEvt-&gt;caller_id = REQUESTS_DEMO_APP;
+QACTIVE_POST(AO_AmuletExternalSensors, &amp;subscriptionEvt-&gt;super, me);
+
+/** Using the NetworkManager
+
+//This requires 8 parameters:
+//device_id, expiration, window_size, window_interval, caller_id
+//HRM, 0x0000, 0x0001,0x0001,0x01
+uint8_t * messageParameters = malloc(8);
+//TODO: Make sure this memory gets freed when the corresponding IPC message
+//has been acked.
+messageParameters[0] = HRM;
+messageParameters[1] = 0;
+messageParameters[2] = 0;
+messageParameters[3] = 1;
+messageParameters[4] = 0;
+messageParameters[5] = 1;
+messageParameters[6] = 0;
+messageParameters[7] = 1;
+
+AmuletNetworkEvt *testMessageEvt;
+testMessageEvt = Q_NEW(AmuletNetworkEvt, ADD_MESSAGE_TO_QUEUE_SIG);
+testMessageEvt-&gt;majorType = IPC_REQUEST;
+testMessageEvt-&gt;minorType = SUBSCRIBE_EXTERNAL_SENSOR;
+testMessageEvt-&gt;targetID = EXT_SENSOR_MAN_M0;
+testMessageEvt-&gt;params = messageParameters;
+testMessageEvt-&gt;nparams = 8;
+QACTIVE_POST(AO_AmuletNetwork, &amp;testMessageEvt-&gt;super, NULL);
+
+*/</action>
+      <tran_glyph conn="40,34,3,1,35,2,-2">
+       <action box="0,-2,23,4"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="40,14,33,29">
+      <entry box="1,2,32,5"/>
+     </state_glyph>
+    </state>
+    <state_diagram size="80,50"/>
+   </statechart>
+  </class>
+  <attribute name="AO_RequestsDemo" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="RequestsDemo_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>RequestsDemo *me = (RequestsDemo *)AO_RequestsDemo;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;RequestsDemo_initial);
+QTimeEvt_ctor(&amp;me-&gt;timeEvt, REQ_CHANGE_SIG);
+
+</code>
+  </operation>
+ </package>
+ <directory name="../">
+  <file name="requests_demo.c">
+   <text>#include &lt;stdlib.h&gt;
+
+
+#include &quot;requests_demo.h&quot;
+
+
+#ifdef REQUESTS_DEMO_APP
+
+/**
+* Simple application for evaluation section
+*/
+
+/* Active object class -----------------------------------------------------*/
+$declare(AOs::RequestsDemo)
+
+
+/* Local objects -----------------------------------------------------------*/
+static RequestsDemo l_requests_demo; /* the single instance of the Table active object */
+
+
+/* Global-scope objects ----------------------------------------------------*/
+QActive * const AO_RequestsDemo = &amp;l_requests_demo.super; /* &quot;opaque&quot; AO pointer */
+
+$define(AOs::RequestsDemo_ctor)
+
+$define(AOs::RequestsDemo)
+
+#endif //RERQUESTS_DEMO_APP</text>
+  </file>
+  <file name="requests_demo.h">
+   <text>#ifndef requests_demo_h
+#define requests_demo_h
+
+
+#include &quot;qp_port.h&quot;
+#include &quot;amulet_api.h&quot;
+
+enum RequestsDemoSignals {
+    REQ_CHANGE_SIG = Q_USER_SIG,
+};
+
+$declare(AOs::RequestsDemo_ctor)
+$declare(AOs::AO_RequestsDemo)
+
+#endif                    /* requests_demo_h */</text>
+  </file>
+ </directory>
+</model>

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model version="2.3.2">
+ <framework name="qpc"/>
+ <package name="Events" stereotype="0x01">
+  <class name="AmuletNetworkEvt" superclass="qpc::QEvt">
+   <attribute name="messageID" type="uint16_t" visibility="0x00" properties="0x00"/>
+   <attribute name="majorType" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="minorType" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="targetID" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="params" type="uint8_t *" visibility="0x00" properties="0x00"/>
+   <attribute name="nparams" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="length" type="uint8_t" visibility="0x00" properties="0x00"/>
+   <attribute name="sender_id" type="uint8_t" visibility="0x00" properties="0x00"/>
+  </class>
+ </package>
+ <package name="AOs" stereotype="0x02">
+  <class name="AmuletNetwork" superclass="qpc::QActive">
+   <attribute name="processNextEvt" type="QTimeEvt" visibility="0x02" properties="0x00">
+    <documentation>// Process the next message on the queue
+// Note that this time event should only be enabled while the que has something in it
+// when the que is empty this event should not be trigered </documentation>
+   </attribute>
+   <attribute name="calls" type="int8_t" visibility="0x02" properties="0x01"/>
+   <attribute name="outgoingQueue" type="ipcMessage *" visibility="0x02" properties="0x01"/>
+   <statechart>
+    <initial target="../1">
+     <action>QTimeEvt_postEvery(&amp;me-&gt;processNextEvt, (QActive *)me, 2*BSP_TICKS_PER_SEC);</action>
+     <initial_glyph conn="28,6,5,0,16,10">
+      <action box="0,-2,24,5"/>
+     </initial_glyph>
+    </initial>
+    <state name="NetworkEnabled">
+     <tran trig="ADD_MESSAGE_TO_QUEUE" target="..">
+      <action>//Add a message to the queue
+ipcMessage *mewMessage = NULL;
+
+mewMessage = (ipcMessage *) malloc(sizeof(ipcMessage));
+
+lastMessageID++;
+
+mewMessage-&gt;messageID = lastMessageID;//Q_EVT_CAST(AmuletNetworkEvt)-&gt;messageID;
+//4 start, 4 end, 1 major type
+//2 len, 1 minor type, 1 target id
+//2 params, 1 crc
+mewMessage-&gt;majorType = Q_EVT_CAST(AmuletNetworkEvt)-&gt;majorType;
+mewMessage-&gt;minorType = Q_EVT_CAST(AmuletNetworkEvt)-&gt;minorType;
+mewMessage-&gt;targetID = Q_EVT_CAST(AmuletNetworkEvt)-&gt;targetID;
+mewMessage-&gt;configParams = Q_EVT_CAST(AmuletNetworkEvt)-&gt;params;
+mewMessage-&gt;nparams = Q_EVT_CAST(AmuletNetworkEvt)-&gt;nparams;
+mewMessage-&gt;next = NULL;
+
+if(NULL == outMessageHead) {
+    outMessageHead = mewMessage;
+} else {
+    enqueue(outMessageHead, mewMessage);
+}
+</action>
+      <tran_glyph conn="23,22,3,1,43,2,-2">
+       <action box="0,-2,30,4"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="SEND_MESSAGE_FROM_QUEUE" target="..">
+      <action>//Grab a message from the queue and send it:
+/*
+if(0 == (AmuletNetwork_calls % 2)){
+    LedOn(ACTLED1);
+} else {
+    LedOff(ACTLED1);
+}
+//&amp;me-&gt;calls = &amp;me-&gt;calls + 1;
+AmuletNetwork_calls++;
+*/
+
+ipcMessage *topMessage = NULL;
+topMessage = outMessageHead;
+//uint8_t messageBytes[20];
+
+//UART0Send(&quot;check\r\n&quot;,7);
+
+//only when there is a message in the queue:
+if(outMessageHead != NULL) {
+//UART0Send(&quot;something\r\n&quot;,11);
+    if(0 == (pos[0] % 2)){
+        LedOn(ACTLED1);
+    } else {
+        LedOff(ACTLED1);
+    }
+    pos[0] = pos[0]+1;
+
+    outMessageHead = outMessageHead-&gt;next;
+    topMessage-&gt;next = NULL;
+
+    ipcSend(topMessage);  
+    //Now put it pack in the queue, and remove 
+    //it only after it has been acked    
+    if(NULL == outMessageHead) {
+        outMessageHead = topMessage;
+    } else {
+        enqueue(outMessageHead, topMessage);
+    }
+
+    //messageToBytes(&amp;topMessage, messageBytes);
+    //UART0Send(messageBytes, 19); 
+    
+}
+
+//uint8_t params[1] = {1}; 
+//uint8_t sensor = Q_EVT_CAST(AmuletSensorsEvt)-&gt;sensor_id;
+//uint8_t caller = Q_EVT_CAST(AmuletSensorsEvt)-&gt;caller_id;
+//SubscribeInternalSensor(sensor, params, 1, 0, 1, 0, caller);</action>
+      <tran_glyph conn="23,26,3,1,43,2,-2">
+       <action box="0,-2,45,7"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="INCOMMING_ACK" target="..">
+      <action>//Remove message to the queue
+uint16_t ackMessageID = Q_EVT_CAST(AmuletNetworkEvt)-&gt;messageID;
+
+outMessageHead = removeElement(outMessageHead, ackMessageID);
+</action>
+      <tran_glyph conn="23,34,3,1,43,2,-2">
+       <action box="0,-2,28,3"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="INCOMMING_NACK" target="..">
+      <tran_glyph conn="23,38,3,1,43,2,-2">
+       <action box="0,-2,20,3"/>
+      </tran_glyph>
+     </tran>
+     <tran trig="INCOMMING_EVT" target="..">
+      <tran_glyph conn="23,42,3,1,43,2,-2">
+       <action box="0,-2,22,3"/>
+      </tran_glyph>
+     </tran>
+     <state_glyph node="23,16,41,30"/>
+    </state>
+    <state_diagram size="80,85"/>
+   </statechart>
+  </class>
+  <attribute name="AO_AmuletNetwork" type="QActive * const" visibility="0x00" properties="0x00"/>
+  <operation name="AmuletNetwork_ctor" type="void" visibility="0x00" properties="0x00">
+   <code>AmuletNetwork *me = (AmuletNetwork *)AO_AmuletNetwork;
+QActive_ctor(&amp;me-&gt;super, (QStateHandler)&amp;AmuletNetwork_initial);
+QTimeEvt_ctor(&amp;me-&gt;processNextEvt, SEND_MESSAGE_FROM_QUEUE_SIG);
+
+pos[0] = 0;
+pos[1] = 0;
+
+lastMessageID = 0;
+
+//outQueue.messages = outMessagePool;
+//outQueue.nmessages = 0;
+//outQueue.head = 0;
+
+//inQueue.messages = inMessagePool;
+//inQueue.nmessages = 0;
+//inQueue.head = 0;</code>
+  </operation>
+ </package>
+ <directory name=".">
+  <file name="amulet_network.c">
+   <text>#include &lt;stdlib.h&gt;
+
+#include &quot;amulet_network.h&quot;
+
+
+/* Active object class -----------------------------------------------------*/
+$declare(AOs::AmuletNetwork)
+
+
+//void QF_onClockTick(void) {
+//    QF_TICK((void *)0);
+//}
+
+
+/* Local objects -----------------------------------------------------------*/
+static AmuletNetwork l_amulet_network; /* the single instance of the AmuletNetwork active object */
+
+
+/* Global-scope objects ----------------------------------------------------*/
+QActive * const AO_AmuletNetwork = &amp;l_amulet_network.super; /* &quot;opaque&quot; AO pointer */
+
+static uint8_t pos[2];
+static ipcMessage *outMessageHead = NULL;
+static uint16_t lastMessageID;
+//static ipcMessage *inMessageHead = NULL;
+
+$define(AOs::AmuletNetwork_ctor)
+
+$define(AOs::AmuletNetwork)</text>
+  </file>
+  <file name="amulet_network.h">
+   <text>#ifndef amulet_network_h
+#define amulet_network_h
+
+#include &quot;qp_port.h&quot;
+#include &quot;amulet.h&quot;
+#include &quot;amulet_api.h&quot;
+
+
+// External sensors and devices:
+#define SMARTPHONE 128
+#define HRM 129
+#define GSR 130
+#define NICOTINE 131
+
+
+enum AmuletNetworkSignals {
+    ADD_MESSAGE_TO_QUEUE_SIG = Q_USER_SIG,
+    SEND_MESSAGE_FROM_QUEUE_SIG,
+    INCOMMING_ACK_SIG,
+    INCOMMING_NACK_SIG,
+    INCOMMING_EVT_SIG,
+    DEVICE_DATA, //This should probably change to SENSOR_DATA
+    DEVICE_UNAVAIL
+};
+
+
+$declare(Events::AmuletNetworkEvt)
+
+$declare(AOs::AmuletNetwork_ctor)
+$declare(AOs::AO_AmuletNetwork)
+
+#endif                    /* amulet_network_h */</text>
+  </file>
+ </directory>
+</model>
