@@ -258,10 +258,10 @@ def getElfStats(executable)
 	$segs = [".data", ".upper.data", ".rodata", ".upper.rodata", ".bss", ".noinit", ".text", ".upper.text"]
 	$allsegs = {}
 
-	response = `msp430-elf-size #{executable}`
+	response = `~/ti/msp430-gcc/bin/msp430-elf-size #{executable}`
 	total_bin_size = response.split("\n")[1].split(" ")[3]
 
-	response = `msp430-elf-readelf -S #{executable}`
+	response = `~/ti/msp430-gcc/bin/msp430-elf-readelf -S #{executable}`
 	fJson = File.open("gen/profiler_ui/compiled_mem_stats.js","w")
 	fJson.write("var app_mem_stats={\n")
 	fJson.write("\"total_memory_stats\": {")
@@ -286,7 +286,7 @@ def getElfStats(executable)
 	end
 	fJson.write("},\n")
 
-	response = `msp430-elf-readelf -s -W #{executable}`
+	response = `~/ti/msp430-gcc/bin/msp430-elf-readelf -s -W #{executable}`
 
 	response.lines.each do |line|
 		toks = line.split(" ")
