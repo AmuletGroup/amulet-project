@@ -262,53 +262,50 @@ void __attribute__((interrupt(TIMER0_A0_VECTOR))) timerA_ISR(void)
 // If we got a continuous increasing or decreasing CTS sequence, then send
 // signal to the app
     #ifdef CAPTOUCH
+      /* 1. Read the touch states from the MPR121. States 0-7 are stored *
+       *    in touch_states[0] and 8-11 are in touch_states[1].          */
+      uint8_t touch_states[2] = {0,0};
+      MPR121_Read_Touch_States(0x5A, touch_states);
+      uint16_t touched = (touch_states[1] << 8) | touch_states[0];
 
-      #ifdef BSP_SNAIL_KITE
-        /* 1. Read the touch states from the MPR121. States 0-7 are stored *
-         *    in touch_states[0] and 8-11 are in touch_states[1].          */
-        uint8_t touch_states[2] = {0,0};
-        MPR121_Read_Touch_States(0x5A, touch_states);
-        uint16_t touched = (touch_states[1] << 8) | touch_states[0];
-
-        /* 2. Loop over the first 12 bits of touched and check to see if *
-         *    there have been any changes in the states of the pins.     */
-        int i,j = 1;
-        for (i=0; i < 12; i++){
-          if(touched & j) {                 // Pin i is currently being touched. If this
-            if(capTouchStates[i] == 0){     // is the first time, mark it as touched
-              capTouchStates[i] = 1;
-              if(i > capLastPos) {          // If the current pin is "higher" than the
-                capUpCount++;               // last touched pin, then the user is sliding
-                capDownCount = 0;           // up. Increment up count, reset down count, and
-                capLastPos = i;             // break for loop
-                break;
-              }
-              if(i < capLastPos) {          // If the current pin is "lower" than the
-                capUpCount = 0;             // last touched pin, then the user is sliding
-                capDownCount++;             // down. Increment down count, reset up count,
-                capLastPos = i;             // and break for loop
-                break;
-              }
+      /* 2. Loop over the first 12 bits of touched and check to see if *
+       *    there have been any changes in the states of the pins.     */
+      int i,j = 1;
+      for (i=0; i < 12; i++){
+        if(touched & j) {                 // Pin i is currently being touched. If this
+          if(capTouchStates[i] == 0){     // is the first time, mark it as touched
+            capTouchStates[i] = 1;
+            if(i > capLastPos) {          // If the current pin is "higher" than the
+              capUpCount++;               // last touched pin, then the user is sliding
+              capDownCount = 0;           // up. Increment up count, reset down count, and
+              capLastPos = i;             // break for loop
+              break;
             }
-          } else{                           // Pin i is not currently being touched
-            if(capTouchStates[i] == 1){     // Make sure that it is not marked as touched
-              capTouchStates[i] = 0;
+            if(i < capLastPos) {          // If the current pin is "lower" than the
+              capUpCount = 0;             // last touched pin, then the user is sliding
+              capDownCount++;             // down. Increment down count, reset up count,
+              capLastPos = i;             // and break for loop
+              break;
             }
           }
-          j = j << 1;                       // Move to the next pin state
+        } else{                           // Pin i is not currently being touched
+          if(capTouchStates[i] == 1){     // Make sure that it is not marked as touched
+            capTouchStates[i] = 0;
+          }
         }
+        j = j << 1;                       // Move to the next pin state
+      }
 
-        /* 3. The capSlideThreshold determines how many pins need to be     *
-         *    touched in a row (either up or down) to constitute a "slide". */
-        if(capUpCount >= capSlideThreshold) {
-            capUpCount = 0;
-            sliderSignal(AMULET_SLIDER_UP_SIG);
-        }
-        if(capDownCount >= capSlideThreshold) {
-            capDownCount = 0;
-            sliderSignal(AMULET_SLIDER_DOWN_SIG);
-        }
-      #endif
+      /* 3. The capSlideThreshold determines how many pins need to be     *
+       *    touched in a row (either up or down) to constitute a "slide". */
+      if(capUpCount >= capSlideThreshold) {
+          capUpCount = 0;
+          sliderSignal(AMULET_SLIDER_UP_SIG);
+      }
+      if(capDownCount >= capSlideThreshold) {
+          capDownCount = 0;
+          sliderSignal(AMULET_SLIDER_DOWN_SIG);
+      }
     #endif
 }
 
@@ -450,124 +447,6 @@ void __attribute__((interrupt(TIMER3_A1_VECTOR))) TimerA3_ISR(void)
 
 } // end interrupt
 
-void white_owl_initialize_pins() {
-  // Init all pins to a known state
-  // Everything as an input, with a pulldown resistor first
-
-  // Port 1 low power
-  P1DIR = 0;
-  P1OUT = 0;
-  P1REN = 0xFF;
-
-  // Port 2 low power
-  P2DIR = 0;
-  P2OUT = 0;
-  P2REN = 0xFF;
-
-  // Port 3 low power
-  P3DIR = 0;
-  P3OUT = 0;
-  P3REN = 0xFF;
-
-  // Port 4 low power
-  P4DIR = 0;
-  P4OUT = 0;
-  P4REN = 0xFF;
-
-  // Port 5 low power
-  P5DIR = 0;
-  P5OUT = 0;
-  P5REN = 0xFF;
-
-  // Port 9 low power
-  P9DIR = 0;
-  P9OUT = 0;
-  P9REN = 0xFF;
-
-  // Port J low power
-  PJDIR = 0;
-  PJOUT = 0;
-  PJREN = 0xFF;
-
-  // Buttons to pull-up so they dont draw anything when not pressed
-  button0_PxOUT |= button0_BITx;
-  button0_PxREN |= button0_BITx;
-  button1_PxOUT |= button1_BITx;
-  button1_PxREN |= button1_BITx;
-
-  // Set SOMI to output and low
-  SPI_DIR |= SPI_SOMI;
-  SPI_OUT &= ~SPI_SOMI;
-
-  // Set SIMO to output and low
-  SPI_DIR |= SPI_SIMO;
-  SPI_OUT &= ~SPI_SIMO;
-
-  // Set CLK to output and low
-  SPI_CLK_DIR |= SPI_CLK;
-  SPI_CLK_OUT &= ~SPI_CLK;
-
-  // Display deassert
-  // PJDIR |= BIT7;
-  // PJOUT &= ~BIT7;
-
-  // Delay to settle
-  __delay_cycles(1000000);
-
-  // Turn SD off
-  SD_POWER_DIR |= SD_POWER;
-  SD_POWER_OUT |= SD_POWER;
-
-  // SD CS low (so no power)
-  SD_CS_DIR |= SD_CS;
-  SD_CS_OUT &= ~SD_CS;
-
-  // BLE turn off
-  IPC_PWR_PxDIR |= IPC_PWR_BITx;
-  IPC_PWR_PxOUT |= IPC_PWR_BITx;
-
-  // BLE SPI pins output and low
-  IPC_SPI_DIR |= IPC_SPI_CLK | IPC_SPI_SOMI | IPC_SPI_SIMO;
-  IPC_SPI_OUT &= ~(IPC_SPI_CLK | IPC_SPI_SOMI | IPC_SPI_SIMO);
-
-  // IPC Chip select
-  IPC_CS_PxDIR |= IPC_CS_BITx;
-  IPC_CS_PxOUT &= ~IPC_CS_BITx;
-
-  // Gyro CS low
-  GYRO_CS_PxDIR |= GYRO_CS_BITx;
-  GYRO_CS_PxOUT &= ~GYRO_CS_BITx;
-
-  // Gyro turn off
-  GYRO_ENABLE_PxDIR |= GYRO_ENABLE_BITx;
-  GYRO_ENABLE_PxOUT |= GYRO_ENABLE_BITx;
-
-  // XL CS deselect
-  ACCEL_CS_PxDIR |= ACCEL_CS_BITx;
-  ACCEL_CS_PxOUT |= ACCEL_CS_BITx;
-
-  // Turn off Mic
-  AUDIO_ADC_PXDIR |= AUDIO_ADC_INPUT_BITX;
-  AUDIO_ADC_PXOUT &= ~AUDIO_ADC_INPUT_BITX;
-
-  // Delay to settle
-  __delay_cycles(100000);
-
-  // Turn off the temp
-  TEMP_POWER_DIR |= TEMP_POWER_BIT;
-  TEMP_POWER_OUT &= ~TEMP_POWER_BIT;
-
-  // Delay to settle
-  __delay_cycles(100000);
-
-  // Turn off the light sensor
-  LIGHT_POWER_DIR |= LIGHT_POWER_BIT;
-  LIGHT_POWER_OUT &= ~LIGHT_POWER_BIT;
-
-  // Delay to settle
-  __delay_cycles(100000);
-}
-
 void snail_kite_initialize_pins() {
   // Gyro power on
   P1DIR |= BIT4;
@@ -609,12 +488,7 @@ void BSP_init(void) {
   WDTCTL = (WDTPW | WDTHOLD); /* stop the watchdog timer */
 
 // This is platform hardware dependant, and is included by bsp_init.h
-#ifdef BSP_SNAIL_KITE
   snail_kite_initialize_pins();
-#endif
-#ifdef BSP_WHITE_OWL
-  white_owl_initialize_pins();
-#endif
 
   PM5CTL0 &= ~LOCKLPM5;
 
@@ -635,14 +509,6 @@ void BSP_init(void) {
 
   // Set the timer
   amulet_startup_timer = 0;
-
-// Only use the ADC with the bracelet for now, the devboard IO's are all taken
-// up
-#ifndef BSP_DEV
-  adc_init();
-  enable_ADC(); // call this function to power up the ADC and thumbwheel, see
-                // ADC_driver.h for details
-#endif
 
   TA0CCR0 = (unsigned)((BSP_ACLK + BSP_TICKS_PER_SEC / 2) / BSP_TICKS_PER_SEC);
   TA0CTL = (TASSEL_1 | MC_1 |
@@ -695,36 +561,18 @@ void BSP_init(void) {
   // Same bus as XL so SPI is already init
   GyroBegin();
 
-// Init CapTouch Sliders
-#ifdef CAPTOUCH
-    #ifdef BSP_WHITE_OWL
-        TI_CAPT_Init_Baseline(&slider1);
-        TI_CAPT_Update_Baseline(&slider1, 10);
-        GPIO_setAsInputPin(GPIO_PORT_P1, GPIO_PIN0);
-        GPIO_setAsInputPin(GPIO_PORT_P9, GPIO_PIN0 | GPIO_PIN1);
-    #endif
+  // Init CapTouch Sliders
+  #ifdef CAPTOUCH
 
-    #ifdef BSP_SNAIL_KITE
-        P2DIR &= ~BIT4;                                 // Configure P2.4 as input for MPR IRQ pin
-        P2OUT |= BIT4;                                  // Configure pull-up resistor on P2.4
-        P2REN |= BIT4;                                  // Enable pull-up res on P2.4
-        P1SEL0 |= BIT6 | BIT7;                          // Configure I2C pins P1.6 = SDA P1.7 = SCL
-        P1SEL1 &= ~(BIT6 | BIT7);                       // Configure I2C pins P1.6 = SDA P1.7 = SCL
-        I2C_Init(UCSSEL__SMCLK, 64);
+    P2DIR &= ~BIT4;                                 // Configure P2.4 as input for MPR IRQ pin
+    P2OUT |= BIT4;                                  // Configure pull-up resistor on P2.4
+    P2REN |= BIT4;                                  // Enable pull-up res on P2.4
+    P1SEL0 |= BIT6 | BIT7;                          // Configure I2C pins P1.6 = SDA P1.7 = SCL
+    P1SEL1 &= ~(BIT6 | BIT7);                       // Configure I2C pins P1.6 = SDA P1.7 = SCL
+    I2C_Init(UCSSEL__SMCLK, 64);
 
-        MPR121_Init(0x5A);
-    #endif
-#endif
-
-#ifdef PROFLILNG
-// PROFLILNG_DIR |= PROFLILNG_PIN;
-// P2DIR |= BIT3;//App profiling
-#endif
-
-#ifdef SCRIPT_EVENTS
-  current_ticks = 0;
-  script_pointer = 0;
-#endif
+    MPR121_Init(0x5A);
+  #endif
 
 // Enable the watchdog.  Clearing the watchdog happens in QF_onIdle().
 // What the settings mean:

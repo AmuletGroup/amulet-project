@@ -6,12 +6,6 @@
  *
  * See: Configuration file in `project-amulet/src/aft/`.
  */
-#ifdef BSP_DEV
-#include "bsp_devboard_init.h"
-#endif
-
-#ifdef BSP_SNAIL_KITE
 #include "bsp_snail_kite_init.h"
-#endif
 
 #endif
