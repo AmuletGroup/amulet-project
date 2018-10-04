@@ -41,13 +41,9 @@ FIL logfile; // File object needed for each open file
 
 #elif defined(__GNUC__)
 
-FATFS sdVolume;
-__attribute__((section(".noinit"))) // FatFs work area needed for each volume
-FIL logfile;
-__attribute__((section(".noinit"))) // File object needed for each open file
-
-char sd_commit_buffer[1024]; // large(ish) buffer for writing to SD card
-__attribute__((section(".noinit")))
+FATFS __attribute__((section(".noinit"))) sdVolume; // FatFs work area needed for each volume
+FIL __attribute__((section(".noinit"))) logfile; // File object needed for each open file
+char __attribute__((section(".noinit"))) sd_commit_buffer[1024]; // large(ish) buffer for writing to SD card
 
 #else
 #error Compiler not supported!
