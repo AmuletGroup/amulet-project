@@ -10,7 +10,7 @@ The main board, battery, haptic buzzer, and secondary storage board are all hous
   - Analog Devices ADMP510 microphone
   - Everlight ALS-PT19 light sensor
   - Texas Instruments TMP20 temperature sensor
-  - STMicroelectronics L3GD20H gyroscope
+  - STMicroelectronics LSM6DSL gyroscope
   - Analog Devices ADXL362 accelerometer
   - Lapis Semi ML8511 UVA/B sensor
 - **Communication**: 
